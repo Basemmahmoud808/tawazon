@@ -639,7 +639,7 @@ export default function App() {
                     <form onSubmit={handleAddCustomHabit} style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
                       <input
                         type="text"
-                        placeholder="أضف عادة جديدة..."
+                        placeholder="إضافة مهام اليوم..."
                         value={newHabitName}
                         onChange={(e) => setNewHabitName(e.target.value)}
                         style={{

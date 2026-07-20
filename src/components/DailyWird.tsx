@@ -532,7 +532,24 @@ const QuranTracker: React.FC = () => {
                   // Clean up Al-Fatihah Basmalah from rendering twice
                   let text = ayah.text;
                   if (activeSurahNum !== 1 && ayah.numberInSurah === 1) {
-                    text = text.replace(/^بِسْمِ.*?الرَّحِيمِ\s*/, "").trim();
+                    const clean = text.replace(/[\u064B-\u065F\u0670]/g, "");
+                    if (clean.startsWith("بسم الله الرحمن الرحيم")) {
+                      const cleanWord = "الرحيم";
+                      const cleanIdx = clean.indexOf(cleanWord);
+                      if (cleanIdx !== -1) {
+                        let originalIdx = 0;
+                        let matchedLetters = 0;
+                        const targetLetters = cleanIdx + cleanWord.length;
+                        while (originalIdx < text.length && matchedLetters < targetLetters) {
+                          const char = text[originalIdx];
+                          if (!/[\u064B-\u065F\u0670]/.test(char)) {
+                            matchedLetters++;
+                          }
+                          originalIdx++;
+                        }
+                        text = text.substring(originalIdx).trim();
+                      }
+                    }
                   }
 
                   return (
