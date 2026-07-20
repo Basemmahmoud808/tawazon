@@ -137,7 +137,7 @@ export default function App() {
     new Date().toISOString()
   );
   const [daysCompleted, setDaysCompleted] = useLocalStorage<boolean[]>(
-    "tawazon_30day_completion_v4",
+    "tawazon_30day_completion_v5",
     Array(30).fill(false)
   );
 
@@ -172,6 +172,14 @@ export default function App() {
       }
     }
   }, [completedCount, totalCount, currentDayIndex]);
+
+  // Automatic challenge rollover: once 30 days are reached, automatically start a new 30-day cycle
+  useEffect(() => {
+    if (currentDayIndex >= 30) {
+      setChallengeStartDate(new Date().toISOString());
+      setDaysCompleted(Array(30).fill(false));
+    }
+  }, [currentDayIndex, setChallengeStartDate, setDaysCompleted]);
 
   // Helper to show native Web Notification
   const showLocalNotification = (title: string, body: string) => {
