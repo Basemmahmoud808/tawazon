@@ -393,7 +393,12 @@ const QuranTracker: React.FC = () => {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid var(--bg-accent)", paddingBottom: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "24px" }}>📖</span>
-            <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "var(--brand)", fontFamily: "Thmanyah Serif Display, serif" }}>المصحف الإلكتروني كامل</h3>
+            <div>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "var(--brand)", fontFamily: "Thmanyah Serif Display, serif" }}>المصحف الإلكتروني كامل</h3>
+              <p style={{ margin: "2px 0 0", fontSize: "10px", color: "var(--gold)", fontWeight: "bold" }}>
+                النص القرآني بالرسم العثماني المعتمد من مشروع تنزيل (Tanzil.net)
+              </p>
+            </div>
           </div>
           
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>

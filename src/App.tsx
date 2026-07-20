@@ -131,18 +131,45 @@ export default function App() {
   const completedCount = habits.filter((h) => h.completed).length;
   const totalCount = habits.length;
 
-  // 30 Days Habit tracker calendar grid state (1-indexed for date mapping, 30 days)
-  const [daysCompleted, setDaysCompleted] = useLocalStorage<boolean[]>("tawazon_30day_completion", Array(30).fill(false));
-  const currentDayIndex = new Date().getDate() - 1;
+  // 90 Days Challenge tracker synced to start date
+  const [challengeStartDate, setChallengeStartDate] = useLocalStorage<string>(
+    "tawazon_90day_start_date",
+    new Date().toISOString()
+  );
+  const [daysCompleted, setDaysCompleted] = useLocalStorage<boolean[]>(
+    "tawazon_90day_completion_v3",
+    Array(90).fill(false)
+  );
+
+  const getChallengeDayIndex = () => {
+    const start = new Date(challengeStartDate);
+    start.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - start.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const currentDayIndex = getChallengeDayIndex();
+
+  const handleResetChallenge = () => {
+    if (window.confirm("هل أنت متأكد من رغبتك في إعادة بدء تحدي الـ 90 يوماً من اليوم وتصفير التقدم؟")) {
+      setChallengeStartDate(new Date().toISOString());
+      setDaysCompleted(Array(90).fill(false));
+    }
+  };
 
   // Auto-complete day in grid if all daily habits are checked off
   useEffect(() => {
     if (totalCount > 0 && completedCount === totalCount) {
-      setDaysCompleted((prev) => {
-        const next = [...prev];
-        next[currentDayIndex] = true;
-        return next;
-      });
+      if (currentDayIndex >= 0 && currentDayIndex < 90) {
+        setDaysCompleted((prev) => {
+          const next = [...prev];
+          next[currentDayIndex] = true;
+          return next;
+        });
+      }
     }
   }, [completedCount, totalCount, currentDayIndex]);
 
@@ -661,15 +688,19 @@ export default function App() {
                       </span>
                     )}
                   </div>
+                  
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <button style={monthArrowBtnStyle}>{"<"}</button>
-                    <span style={monthTitleStyle}>يونيو</span>
-                    <button style={monthArrowBtnStyle}>{">"}</button>
+                    <span style={{ ...monthTitleStyle, color: "var(--gold)" }}>
+                      {currentDayIndex >= 0 && currentDayIndex < 90 
+                        ? `اليوم ${currentDayIndex + 1} من 90` 
+                        : "مكتمل 🎉"}
+                    </span>
                   </div>
+
                 </div>
 
-                {/* 30 Days Grid */}
-                <div style={calendar30GridStyle}>
+                {/* 90 Days Grid (10 Columns) */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "6px", margin: "12px 0" }}>
                   {daysCompleted.map((isDone, idx) => {
                     const dayNum = idx + 1;
                     const isToday = idx === currentDayIndex;
@@ -685,12 +716,14 @@ export default function App() {
                         }}
                         style={{
                           ...calendarDayCircleStyle,
+                          fontSize: "9px",
                           backgroundColor: isDone ? "var(--brand)" : "transparent",
                           borderColor: isDone ? "var(--brand)" : isToday ? "var(--gold)" : "var(--bg-accent)",
                           color: isDone ? "white" : "var(--text-muted)",
                           fontWeight: isToday ? "bold" : "normal",
-                          boxShadow: isToday ? "0 0 10px rgba(194, 144, 40, 0.25)" : "none",
+                          boxShadow: isToday ? "0 0 8px rgba(194, 144, 40, 0.25)" : "none",
                         }}
+                        title={`اليوم ${dayNum}`}
                       >
                         {dayNum}
                       </div>
@@ -698,8 +731,11 @@ export default function App() {
                   })}
                 </div>
 
-                <div style={{ marginTop: "auto", display: "flex", justifyContent: "flex-end" }}>
-                  <button style={cardFooterBtnStyle}>المعدل</button>
+                <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: "bold" }}>
+                    معدل الإلتزام: {Math.round((daysCompleted.filter(Boolean).length / 90) * 100)}%
+                  </span>
+                  <button onClick={handleResetChallenge} style={cardFooterBtnStyle}>إعادة بدء التحدي 🔄</button>
                 </div>
               </div>
             </div>
@@ -752,6 +788,50 @@ export default function App() {
         <div style={footerContactRow}>
           <h4 style={footerBrandName}>منصة توازن</h4>
         </div>
+        
+        {/* Contact info links */}
+        <div style={{ display: "flex", justifyContent: "center", gap: "16px", margin: "10px 0 16px", flexWrap: "wrap" }}>
+          <a
+            href="https://wa.me/201092610252"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              color: "var(--brand)",
+              textDecoration: "none",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              border: "1px solid rgba(17,91,61,0.15)",
+              backgroundColor: "var(--brand-light)"
+            }}
+          >
+            <span>💬 واتساب: 01092610252</span>
+          </a>
+
+          <a
+            href="mailto:basemmahmoud545@gmail.com"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              color: "var(--gold)",
+              textDecoration: "none",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              border: "1px solid rgba(194,144,40,0.15)",
+              backgroundColor: "rgba(194,144,40,0.05)"
+            }}
+          >
+            <span>✉️ البريد: basemmahmoud545@gmail.com</span>
+          </a>
+        </div>
+
         <p style={footerCredit}>🌿 جميع الحقوق محفوظة لـ توازن © {new Date().getFullYear()}</p>
       </footer>
     </div>
@@ -836,13 +916,13 @@ const columnTitleStyle: React.CSSProperties = {
   margin: 0,
 };
 
-const monthArrowBtnStyle: React.CSSProperties = {
+/* const monthArrowBtnStyle: React.CSSProperties = {
   background: "none",
   border: "none",
   fontSize: "14px",
   color: "var(--text-muted)",
   cursor: "pointer",
-};
+}; */
 
 const monthTitleStyle: React.CSSProperties = {
   fontSize: "13px",
@@ -850,12 +930,12 @@ const monthTitleStyle: React.CSSProperties = {
   color: "var(--text-main)",
 };
 
-const calendar30GridStyle: React.CSSProperties = {
+/* const calendar30GridStyle: React.CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(6, 1fr)",
   gap: "12px",
   margin: "12px 0",
-};
+}; */
 
 const calendarDayCircleStyle: React.CSSProperties = {
   aspectRatio: "1/1",
