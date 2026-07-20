@@ -180,6 +180,22 @@ export default function App() {
 
   const currentDayIndex = getChallengeDayIndex();
 
+  const [showDuaModal, setShowDuaModal] = useState<boolean>(() => {
+    try {
+      const shown = localStorage.getItem("tawazon_welcome_dua_v2");
+      return !shown;
+    } catch {
+      return true;
+    }
+  });
+
+  const handleDismissDua = () => {
+    setShowDuaModal(false);
+    try {
+      localStorage.setItem("tawazon_welcome_dua_v2", "true");
+    } catch { /* ignore */ }
+  };
+
   // Strict Real-Time Day Index calculations
   const todayPhase = Math.floor(currentDayIndex / 30) + 1;
   const todayLocalIdx = currentDayIndex % 30;
@@ -410,6 +426,21 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* Welcome Dua Modal */}
+      {showDuaModal && (
+        <div style={modalOverlayStyle}>
+          <div style={duaModalContentStyle}>
+            <span style={{ fontSize: "42px", marginBottom: "16px" }}>🤲</span>
+            <h3 style={{ margin: "0 0 12px", color: "var(--brand)", fontSize: "19px", fontWeight: "900", fontFamily: "Thmanyah Serif Display, serif" }}>دعاء من القلب</h3>
+            <p style={{ margin: "0 0 24px", fontSize: "14px", lineHeight: "1.8", color: "var(--text-main)", fontWeight: "800", textAlign: "center" }}>
+              الرجاء الدعاء لصاحب هذا الموقع بالخير والرزق والبركة
+            </p>
+            <button onClick={handleDismissDua} style={duaModalBtnStyle} onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"} onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}>
+              اللهم آمين ✨
+            </button>
+          </div>
+        </div>
+      )}
       {/* Centered Brand Title */}
       <div style={{ textAlign: "center", marginTop: "36px", marginBottom: "8px" }}>
         <h1 className="logo-text" style={{ fontSize: "38px", color: "var(--brand)", fontFamily: "Thmanyah Serif Display, serif", fontWeight: "bold", letterSpacing: "-0.5px" }}>
@@ -1150,4 +1181,48 @@ const footerCredit: React.CSSProperties = {
   fontSize: "11px",
   color: "var(--text-muted)",
   opacity: 0.7,
+};
+
+const modalOverlayStyle: React.CSSProperties = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  backdropFilter: "blur(8px)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 10000,
+  padding: "20px",
+};
+
+const duaModalContentStyle: React.CSSProperties = {
+  backgroundColor: "var(--bg-card)",
+  borderRadius: "24px",
+  padding: "32px 24px",
+  maxWidth: "380px",
+  width: "100%",
+  boxShadow: "0 20px 40px rgba(0,0,0,0.18)",
+  border: "1.5px solid var(--bg-accent)",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  textAlign: "center",
+};
+
+const duaModalBtnStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "12px",
+  borderRadius: "14px",
+  backgroundColor: "var(--brand)",
+  color: "white",
+  border: "none",
+  fontWeight: "900",
+  fontSize: "14px",
+  cursor: "pointer",
+  boxShadow: "0 4px 12px rgba(17,91,61,0.2)",
+  transition: "all 0.2s ease",
+  outline: "none",
 };
