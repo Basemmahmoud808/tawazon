@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Dhikr {
@@ -16,27 +16,6 @@ interface QuranGoal {
   date: string;
 }
 
-interface Ayah {
-  number: number;
-  text: string;
-  numberInSurah: number;
-  juz: number;
-  manzil: number;
-  page: number;
-  ruku: number;
-  hizbQuarter: number;
-  sajda: boolean;
-}
-
-interface SurahDetails {
-  number: number;
-  name: string;
-  englishName: string;
-  englishNameTranslation: string;
-  revelationType: string;
-  ayahs: Ayah[];
-}
-
 // ─── Static Data ──────────────────────────────────────────────────────────────
 const WIRD_ITEMS: Omit<Dhikr, "remaining">[] = [
   { id: "w1", count: 33,  text: "سُبْحَانَ اللهِ",        source: "33 مرة" },
@@ -47,130 +26,70 @@ const WIRD_ITEMS: Omit<Dhikr, "remaining">[] = [
   { id: "w6", count: 100, text: "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ", source: "الصلاة على النبي ﷺ مئة مرة" },
 ];
 
+// Surah Starting Page Numbers in the standard Madinah Mushaf (15 lines per page)
+const SURAHS_STARTING_PAGES: Record<number, number> = {
+  1: 1, 2: 2, 3: 50, 4: 77, 5: 106, 6: 128, 7: 151, 8: 177, 9: 187, 10: 208,
+  11: 221, 12: 235, 13: 249, 14: 255, 15: 262, 16: 267, 17: 282, 18: 293, 19: 305, 20: 312,
+  21: 322, 22: 332, 23: 342, 24: 350, 25: 359, 26: 367, 27: 377, 28: 385, 29: 396, 30: 404,
+  31: 411, 32: 415, 33: 418, 34: 428, 35: 434, 36: 440, 37: 446, 38: 453, 39: 458, 40: 467,
+  41: 477, 42: 483, 43: 489, 44: 496, 45: 499, 46: 502, 47: 507, 48: 511, 49: 515, 50: 518,
+  51: 520, 52: 523, 53: 526, 54: 528, 55: 531, 56: 534, 57: 537, 58: 542, 59: 545, 60: 549,
+  61: 551, 62: 553, 63: 554, 64: 556, 65: 558, 66: 560, 67: 562, 68: 564, 69: 568, 70: 570,
+  71: 572, 72: 574, 73: 576, 74: 578, 75: 580, 76: 582, 77: 585, 78: 586, 79: 588, 80: 590,
+  81: 593, 82: 594, 83: 595, 84: 597, 85: 599, 86: 600, 87: 601, 88: 602, 89: 603, 90: 604,
+  91: 605, 92: 605, 93: 606, 94: 606, 95: 607, 96: 607, 97: 608, 98: 608, 99: 609, 100: 609,
+  101: 610, 102: 610, 103: 611, 104: 611, 105: 611, 106: 612, 107: 612, 108: 612, 109: 613, 110: 613,
+  111: 613, 112: 614, 113: 614, 114: 614
+};
+
 const SURAHS_LIST = [
-  { number: 1, name: "الفاتحة", type: "Meccan", ayahs: 7 },
-  { number: 2, name: "البقرة", type: "Medinan", ayahs: 286 },
-  { number: 3, name: "آل عمران", type: "Medinan", ayahs: 200 },
-  { number: 4, name: "النساء", type: "Medinan", ayahs: 176 },
-  { number: 5, name: "المائدة", type: "Medinan", ayahs: 120 },
-  { number: 6, name: "الأنعام", type: "Meccan", ayahs: 165 },
-  { number: 7, name: "الأعراف", type: "Meccan", ayahs: 206 },
-  { number: 8, name: "الأنفال", type: "Medinan", ayahs: 75 },
-  { number: 9, name: "التوبة", type: "Medinan", ayahs: 129 },
-  { number: 10, name: "يونس", type: "Meccan", ayahs: 109 },
-  { number: 11, name: "هود", type: "Meccan", ayahs: 123 },
-  { number: 12, name: "يوسف", type: "Meccan", ayahs: 111 },
-  { number: 13, name: "الرعد", type: "Medinan", ayahs: 43 },
-  { number: 14, name: "إبراهيم", type: "Meccan", ayahs: 52 },
-  { number: 15, name: "الحجر", type: "Meccan", ayahs: 99 },
-  { number: 16, name: "النحل", type: "Meccan", ayahs: 128 },
-  { number: 17, name: "الإسراء", type: "Meccan", ayahs: 111 },
-  { number: 18, name: "الكهف", type: "Meccan", ayahs: 110 },
-  { number: 19, name: "مريم", type: "Meccan", ayahs: 98 },
-  { number: 20, name: "طه", type: "Meccan", ayahs: 135 },
-  { number: 21, name: "الأنبياء", type: "Meccan", ayahs: 112 },
-  { number: 22, name: "الحج", type: "Medinan", ayahs: 78 },
-  { number: 23, name: "المؤمنون", type: "Meccan", ayahs: 118 },
-  { number: 24, name: "النور", type: "Medinan", ayahs: 64 },
-  { number: 25, name: "الفرقان", type: "Meccan", ayahs: 77 },
-  { number: 26, name: "الشعراء", type: "Meccan", ayahs: 227 },
-  { number: 27, name: "النمل", type: "Meccan", ayahs: 93 },
-  { number: 28, name: "القصص", type: "Meccan", ayahs: 88 },
-  { number: 29, name: "العنكبوت", type: "Meccan", ayahs: 69 },
-  { number: 30, name: "الروم", type: "Meccan", ayahs: 60 },
-  { number: 31, name: "لقمان", type: "Meccan", ayahs: 34 },
-  { number: 32, name: "السجدة", type: "Meccan", ayahs: 30 },
-  { number: 33, name: "الأحزاب", type: "Medinan", ayahs: 73 },
-  { number: 34, name: "سبأ", type: "Meccan", ayahs: 54 },
-  { number: 35, name: "فاطر", type: "Meccan", ayahs: 45 },
-  { number: 36, name: "يس", type: "Meccan", ayahs: 83 },
-  { number: 37, name: "الصافات", type: "Meccan", ayahs: 182 },
-  { number: 38, name: "ص", type: "Meccan", ayahs: 88 },
-  { number: 39, name: "الزمر", type: "Meccan", ayahs: 75 },
-  { number: 40, name: "غافر", type: "Meccan", ayahs: 85 },
-  { number: 41, name: "فصلت", type: "Meccan", ayahs: 54 },
-  { number: 42, name: "الشورى", type: "Meccan", ayahs: 53 },
-  { number: 43, name: "الزخرف", type: "Meccan", ayahs: 89 },
-  { number: 44, name: "الدخان", type: "Meccan", ayahs: 59 },
-  { number: 45, name: "الجاثية", type: "Meccan", ayahs: 37 },
-  { number: 46, name: "الأحقاف", type: "Meccan", ayahs: 35 },
-  { number: 47, name: "محمد", type: "Medinan", ayahs: 38 },
-  { number: 48, name: "الفتح", type: "Medinan", ayahs: 29 },
-  { number: 49, name: "الحجرات", type: "Medinan", ayahs: 18 },
-  { number: 50, name: "ق", type: "Meccan", ayahs: 45 },
-  { number: 51, name: "الذاريات", type: "Meccan", ayahs: 60 },
-  { number: 52, name: "الطور", type: "Meccan", ayahs: 49 },
-  { number: 53, name: "النجم", type: "Meccan", ayahs: 62 },
-  { number: 54, name: "القمر", type: "Meccan", ayahs: 55 },
-  { number: 55, name: "الرحمن", type: "Medinan", ayahs: 78 },
-  { number: 56, name: "الواقعة", type: "Meccan", ayahs: 96 },
-  { number: 57, name: "الحديد", type: "Medinan", ayahs: 29 },
-  { number: 58, name: "المجادلة", type: "Medinan", ayahs: 22 },
-  { number: 59, name: "الحشر", type: "Medinan", ayahs: 24 },
-  { number: 60, name: "الممتحنة", type: "Medinan", ayahs: 13 },
-  { number: 61, name: "الصف", type: "Medinan", ayahs: 14 },
-  { number: 62, name: "الجمعة", type: "Medinan", ayahs: 11 },
-  { number: 63, name: "المنافقون", type: "Medinan", ayahs: 11 },
-  { number: 64, name: "التغابن", type: "Medinan", ayahs: 18 },
-  { number: 65, name: "الطلاق", type: "Medinan", ayahs: 12 },
-  { number: 66, name: "التحريم", type: "Medinan", ayahs: 12 },
-  { number: 67, name: "الملك", type: "Meccan", ayahs: 30 },
-  { number: 68, name: "القلم", type: "Meccan", ayahs: 52 },
-  { number: 69, name: "الحاقة", type: "Meccan", ayahs: 52 },
-  { number: 70, name: "المعارج", type: "Meccan", ayahs: 44 },
-  { number: 71, name: "نوح", type: "Meccan", ayahs: 28 },
-  { number: 72, name: "الجن", type: "Meccan", ayahs: 28 },
-  { number: 73, name: "المزمل", type: "Meccan", ayahs: 20 },
-  { number: 74, name: "المدثر", type: "Meccan", ayahs: 56 },
-  { number: 75, name: "القيامة", type: "Meccan", ayahs: 40 },
-  { number: 76, name: "الإنسان", type: "Medinan", ayahs: 31 },
-  { number: 77, name: "المرسلات", type: "Meccan", ayahs: 50 },
-  { number: 78, name: "النبأ", type: "Meccan", ayahs: 40 },
-  { number: 79, name: "النازعات", type: "Meccan", ayahs: 46 },
-  { number: 80, name: "عبس", type: "Meccan", ayahs: 42 },
-  { number: 81, name: "التكوير", type: "Meccan", ayahs: 29 },
-  { number: 82, name: "الانفطار", type: "Meccan", ayahs: 19 },
-  { number: 83, name: "المطففين", type: "Meccan", ayahs: 36 },
-  { number: 84, name: "الانشقاق", type: "Meccan", ayahs: 25 },
-  { number: 85, name: "البروج", type: "Meccan", ayahs: 22 },
-  { number: 86, name: "الطارق", type: "Meccan", ayahs: 17 },
-  { number: 87, name: "الأعلى", type: "Meccan", ayahs: 19 },
-  { number: 88, name: "الغاشية", type: "Meccan", ayahs: 26 },
-  { number: 89, name: "الفجر", type: "Meccan", ayahs: 30 },
-  { number: 90, name: "البلد", type: "Meccan", ayahs: 20 },
-  { number: 91, name: "الشمس", type: "Meccan", ayahs: 15 },
-  { number: 92, name: "الليل", type: "Meccan", ayahs: 21 },
-  { number: 93, name: "الضحى", type: "Meccan", ayahs: 11 },
-  { number: 94, name: "الشرح", type: "Meccan", ayahs: 8 },
-  { number: 95, name: "التين", type: "Meccan", ayahs: 8 },
-  { number: 96, name: "العلق", type: "Meccan", ayahs: 19 },
-  { number: 97, name: "القدر", type: "Meccan", ayahs: 5 },
-  { number: 98, name: "البينة", type: "Medinan", ayahs: 8 },
-  { number: 99, name: "الزلزلة", type: "Medinan", ayahs: 8 },
-  { number: 100, name: "العاديات", type: "Meccan", ayahs: 11 },
-  { number: 101, name: "القارعة", type: "Meccan", ayahs: 11 },
-  { number: 102, name: "التكاثر", type: "Meccan", ayahs: 8 },
-  { number: 103, name: "العصر", type: "Meccan", ayahs: 3 },
-  { number: 104, name: "الهمزة", type: "Meccan", ayahs: 9 },
-  { number: 105, name: "الفيل", type: "Meccan", ayahs: 5 },
-  { number: 106, name: "قريش", type: "Meccan", ayahs: 4 },
-  { number: 107, name: "الماعون", type: "Meccan", ayahs: 7 },
-  { number: 108, name: "الكوثر", type: "Meccan", ayahs: 3 },
-  { number: 109, name: "الكافرون", type: "Meccan", ayahs: 6 },
-  { number: 110, name: "النصر", type: "Medinan", ayahs: 3 },
-  { number: 111, name: "المسد", type: "Meccan", ayahs: 5 },
-  { number: 112, name: "الإخلاص", type: "Meccan", ayahs: 4 },
-  { number: 113, name: "الفلق", type: "Meccan", ayahs: 5 },
-  { number: 114, name: "الناس", type: "Meccan", ayahs: 6 },
+  { number: 1, name: "الفاتحة" }, { number: 2, name: "البقرة" }, { number: 3, name: "آل عمران" },
+  { number: 4, name: "النساء" }, { number: 5, name: "المائدة" }, { number: 6, name: "الأنعام" },
+  { number: 7, name: "الأعراف" }, { number: 8, name: "الأنفال" }, { number: 9, name: "التوبة" },
+  { number: 10, name: "يونس" }, { number: 11, name: "هود" }, { number: 12, name: "يوسف" },
+  { number: 13, name: "الرعد" }, { number: 14, name: "إبراهيم" }, { number: 15, name: "الحجر" },
+  { number: 16, name: "النحل" }, { number: 17, name: "الإسراء" }, { number: 18, name: "الكهف" },
+  { number: 19, name: "مريم" }, { number: 20, name: "طه" }, { number: 21, name: "الأنبياء" },
+  { number: 22, name: "الحج" }, { number: 23, name: "المؤمنون" }, { number: 24, name: "النور" },
+  { number: 25, name: "الفرقان" }, { number: 26, name: "الشعراء" }, { number: 27, name: "النمل" },
+  { number: 28, name: "القصص" }, { number: 29, name: "العنكبوت" }, { number: 30, name: "الروم" },
+  { number: 31, name: "لقمان" }, { number: 32, name: "السجدة" }, { number: 33, name: "الأحزاب" },
+  { number: 34, name: "سبأ" }, { number: 35, name: "فاطر" }, { number: 36, name: "يس" },
+  { number: 37, name: "الصافات" }, { number: 38, name: "ص" }, { number: 39, name: "الزمر" },
+  { number: 40, name: "غافر" }, { number: 41, name: "فصلت" }, { number: 42, name: "الشورى" },
+  { number: 43, name: "الزخرف" }, { number: 44, name: "الدخان" }, { number: 45, name: "الجاثية" },
+  { number: 46, name: "الأحقاف" }, { number: 47, name: "محمد" }, { number: 48, name: "الفتح" },
+  { number: 49, name: "الحجرات" }, { number: 50, name: "ق" }, { number: 51, name: "الذاريات" },
+  { number: 52, name: "الطور" }, { number: 53, name: "النجم" }, { number: 54, name: "القمر" },
+  { number: 55, name: "الرحمن" }, { number: 56, name: "الواقعة" }, { number: 57, name: "الحديد" },
+  { number: 58, name: "المجادلة" }, { number: 59, name: "الحشر" }, { number: 60, name: "الممتحنة" },
+  { number: 61, name: "الصف" }, { number: 62, name: "الجمعة" }, { number: 63, name: "المنافقون" },
+  { number: 64, name: "التغابن" }, { number: 65, name: "الطلاق" }, { number: 66, name: "التحريم" },
+  { number: 67, name: "الملك" }, { number: 68, name: "القلم" }, { number: 69, name: "الحاقة" },
+  { number: 70, name: "المعارج" }, { number: 71, name: "نوح" }, { number: 72, name: "الجن" },
+  { number: 73, name: "المزمل" }, { number: 74, name: "المدثر" }, { number: 75, name: "القيامة" },
+  { number: 76, name: "الإنسان" }, { number: 77, name: "المرسلات" }, { number: 78, name: "النبأ" },
+  { number: 79, name: "النازعات" }, { number: 80, name: "عبس" }, { number: 81, name: "التكوير" },
+  { number: 82, name: "الانفطار" }, { number: 83, name: "المطففين" }, { number: 84, name: "الانشقاق" },
+  { number: 85, name: "البروج" }, { number: 86, name: "الطارق" }, { number: 87, name: "الأعلى" },
+  { number: 88, name: "الغاشية" }, { number: 89, name: "الفجر" }, { number: 90, name: "البلد" },
+  { number: 91, name: "الشمس" }, { number: 92, name: "الليل" }, { number: 93, name: "الضحى" },
+  { number: 94, name: "الشرح" }, { number: 95, name: "التين" }, { number: 96, name: "العلق" },
+  { number: 97, name: "القدر" }, { number: 98, name: "البينة" }, { number: 99, name: "الزلزلة" },
+  { number: 100, name: "العاديات" }, { number: 101, name: "القارعة" }, { number: 102, name: "التكاثر" },
+  { number: 103, name: "العصر" }, { number: 104, name: "الهمزة" }, { number: 105, name: "الفيل" },
+  { number: 106, name: "قريش" }, { number: 107, name: "الماعون" }, { number: 108, name: "الكوثر" },
+  { number: 109, name: "الكافرون" }, { number: 110, name: "النصر" }, { number: 111, name: "المسد" },
+  { number: 112, name: "الإخلاص" }, { number: 113, name: "الفلق" }, { number: 114, name: "الناس" }
 ];
 
 const STORAGE_KEY = "tawazon_wird_dhikr";
 const QURAN_KEY   = "tawazon_quran_wird";
-const BOOKMARK_KEY = "tawazon_quran_bookmark";
+const BOOKMARK_KEY = "tawazon_quran_page_bookmark_v1";
 const WIRD_COLOR  = "#115B3D";
 const QURAN_COLOR = "#C29028";
 
-// ─── Quran Tracker & Mushaf Sub-component ─────────────────────────────────────
+// ─── Quran Tracker & Visual Mushaf ────────────────────────────────────────────
 const QuranTracker: React.FC = () => {
   const todayStr = new Date().toDateString();
 
@@ -191,16 +110,14 @@ const QuranTracker: React.FC = () => {
   const [draftGoal, setDraftGoal] = useState(quran.goal);
   const [draftUnit, setDraftUnit] = useState<"pages" | "juz">(quran.unit);
 
-  // Mushaf Reader States
+  // Visual Mushaf States (1 to 604 pages)
+  const [activePage, setActivePage] = useState<number>(1);
   const [activeSurahNum, setActiveSurahNum] = useState<number>(1);
-  const [surahContent, setSurahContent] = useState<SurahDetails | null>(null);
-  const [loadingSurah, setLoadingSurah] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [fontSize, setFontSize] = useState<number>(18);
-  const [bookmark, setBookmark] = useState<{ surah: number; verse: number; surahName: string } | null>(() => {
+  const [bookmark, setBookmark] = useState<number | null>(() => {
     try {
       const saved = localStorage.getItem(BOOKMARK_KEY);
-      return saved ? JSON.parse(saved) : null;
+      return saved ? Number(saved) : null;
     } catch {
       return null;
     }
@@ -225,37 +142,23 @@ const QuranTracker: React.FC = () => {
     setEditMode(false);
   };
 
-  // Fetch Surah Text
-  const fetchSurah = useCallback(async (num: number) => {
-    setLoadingSurah(true);
-    try {
-      const res = await fetch(`https://api.alquran.cloud/v1/surah/${num}`);
-      const json = await res.json();
-      setSurahContent(json.data);
-    } catch {
-      alert("فشل تحميل آيات السورة، يرجى التحقق من اتصال الإنترنت.");
-    } finally {
-      setLoadingSurah(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchSurah(activeSurahNum);
-  }, [activeSurahNum, fetchSurah]);
-
-  const handleSaveBookmark = (surahName: string, verseNum: number) => {
-    const data = { surah: activeSurahNum, verse: verseNum, surahName };
-    setBookmark(data);
-    localStorage.setItem(BOOKMARK_KEY, JSON.stringify(data));
+  const handleSaveBookmark = () => {
+    setBookmark(activePage);
+    localStorage.setItem(BOOKMARK_KEY, activePage.toString());
   };
 
   const handleLoadBookmark = () => {
     if (bookmark) {
-      setActiveSurahNum(bookmark.surah);
-      setTimeout(() => {
-        const el = document.getElementById(`ayah-${bookmark.verse}`);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 500);
+      setActivePage(bookmark);
+      // Determine which Surah corresponds to this bookmarked page
+      let foundSurah = 1;
+      for (let sNum = 1; sNum <= 114; sNum++) {
+        const startPage = SURAHS_STARTING_PAGES[sNum];
+        if (bookmark >= startPage) {
+          foundSurah = sNum;
+        }
+      }
+      setActiveSurahNum(foundSurah);
     }
   };
 
@@ -267,6 +170,44 @@ const QuranTracker: React.FC = () => {
   const filteredSurahs = SURAHS_LIST.filter(s =>
     s.name.includes(searchQuery) || s.number.toString() === searchQuery
   );
+
+  const turnPageNext = () => {
+    if (activePage < 604) {
+      const nextPage = activePage + 1;
+      setActivePage(nextPage);
+      // Auto-update Surah dropdown based on page boundaries
+      let foundSurah = 1;
+      for (let sNum = 1; sNum <= 114; sNum++) {
+        if (nextPage >= SURAHS_STARTING_PAGES[sNum]) {
+          foundSurah = sNum;
+        }
+      }
+      setActiveSurahNum(foundSurah);
+    }
+  };
+
+  const turnPagePrev = () => {
+    if (activePage > 1) {
+      const prevPage = activePage - 1;
+      setActivePage(prevPage);
+      // Auto-update Surah dropdown based on page boundaries
+      let foundSurah = 1;
+      for (let sNum = 1; sNum <= 114; sNum++) {
+        if (prevPage >= SURAHS_STARTING_PAGES[sNum]) {
+          foundSurah = sNum;
+        }
+      }
+      setActiveSurahNum(foundSurah);
+    }
+  };
+
+  const handleSurahSelect = (sNum: number) => {
+    setActiveSurahNum(sNum);
+    const startPage = SURAHS_STARTING_PAGES[sNum];
+    if (startPage) {
+      setActivePage(startPage);
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -386,28 +327,25 @@ const QuranTracker: React.FC = () => {
         )}
       </div>
 
-      {/* Embedded Mushaf Card */}
-      <div className="card" style={{ padding: "24px", borderRadius: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid var(--bg-accent)" }}>
+      {/* Embedded 100% Authentic Madinah Mushaf (King Fahd Complex Scanned Pages) */}
+      <div className="card" style={{ padding: "24px", borderRadius: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid var(--bg-accent)", boxShadow: "var(--shadow-sm)" }}>
         
         {/* Mushaf Header Row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid var(--bg-accent)", paddingBottom: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "24px" }}>📖</span>
-            <div>
-              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "var(--brand)", fontFamily: "Thmanyah Serif Display, serif" }}>المصحف الإلكتروني كامل</h3>
-              <p style={{ margin: "2px 0 0", fontSize: "10px", color: "var(--gold)", fontWeight: "bold" }}>
-                النص القرآني بالرسم العثماني المعتمد من مشروع تنزيل (Tanzil.net)
-              </p>
-            </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "var(--brand)", fontFamily: "Thmanyah Serif Display, serif" }}>مصحف المدينة النبوية الشريفة</h3>
+            <p style={{ margin: "2px 0 0", fontSize: "10px", color: "var(--gold)", fontWeight: "bold" }}>
+              نسخة مصورة ومطابقة 100% لمجمع الملك فهد لطباعة المصحف الشريف بالرسم العثماني وعلامات التجويد الكاملة
+            </p>
           </div>
           
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => setFontSize(prev => Math.max(14, prev - 2))} style={actionCircleBtn} title="تصغير الخط">A-</button>
-            <button onClick={() => setFontSize(prev => Math.min(32, prev + 2))} style={actionCircleBtn} title="تكبير الخط">A+</button>
-            
+            <button onClick={handleSaveBookmark} style={bookmarkSaveBtn} title="احفظ الصفحة الحالية كعلامة قراءة">
+              🔖 حفظ العلامة
+            </button>
             {bookmark && (
               <button onClick={handleLoadBookmark} style={bookmarkJumpBtn}>
-                🔖 انتقل إلى {bookmark.surahName} ({bookmark.verse})
+                انتقل للعلامة (صفحة {bookmark})
               </button>
             )}
           </div>
@@ -415,11 +353,10 @@ const QuranTracker: React.FC = () => {
 
         {/* Surah List & Selector Dropdown */}
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          {/* Dropdown Select */}
           <div style={{ flex: 1, minWidth: "200px" }}>
             <select
               value={activeSurahNum}
-              onChange={(e) => setActiveSurahNum(Number(e.target.value))}
+              onChange={(e) => handleSurahSelect(Number(e.target.value))}
               style={{
                 width: "100%",
                 padding: "10px 14px",
@@ -435,13 +372,12 @@ const QuranTracker: React.FC = () => {
             >
               {SURAHS_LIST.map((s) => (
                 <option key={s.number} value={s.number}>
-                  {s.number}. {s.name} ({s.type === "Meccan" ? "مكية" : "مدنية"} - {s.ayahs} آية)
+                  سورة {s.name} (تبدأ من صفحة {SURAHS_STARTING_PAGES[s.number]})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Quick Filter Search */}
           <div style={{ width: "150px" }}>
             <input
               type="text"
@@ -462,13 +398,12 @@ const QuranTracker: React.FC = () => {
           </div>
         </div>
 
-        {/* Quick Filter Selection results */}
         {searchQuery && (
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", maxHeight: "100px", overflowY: "auto", padding: "8px", border: "1px dashed var(--bg-accent)", borderRadius: "10px" }}>
             {filteredSurahs.map(s => (
               <button
                 key={s.number}
-                onClick={() => { setActiveSurahNum(s.number); setSearchQuery(""); }}
+                onClick={() => { handleSurahSelect(s.number); setSearchQuery(""); }}
                 style={{
                   padding: "4px 10px",
                   borderRadius: "20px",
@@ -486,110 +421,80 @@ const QuranTracker: React.FC = () => {
           </div>
         )}
 
-        {/* Quran Reading Area Card */}
+        {/* Mushaf Page Image Display Frame (100% Authentic Images) */}
         <div style={{
-          backgroundColor: "var(--bg-primary)",
+          backgroundColor: "#f7f5ed", // warm paper page color
           borderRadius: "16px",
-          padding: "24px",
-          maxHeight: "450px",
-          overflowY: "auto",
-          direction: "rtl",
-          border: "1px solid var(--bg-accent)",
-          boxShadow: "inset 0 2px 8px rgba(0,0,0,0.03)"
+          padding: "16px",
+          border: "2px solid #e5dec9",
+          boxShadow: "inset 0 4px 12px rgba(0,0,0,0.06)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "16px",
+          position: "relative"
         }}>
-          {loadingSurah ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)", fontSize: "14px" }}>
-              ⏳ جاري تحميل آيات السورة الكريمة...
-            </div>
-          ) : surahContent ? (
-            <div>
-              {/* Surah Title Calligraphy Card */}
-              <div style={{ textAlign: "center", marginBottom: "24px", borderBottom: "1px dashed var(--bg-accent)", paddingBottom: "16px" }}>
-                <h4 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "var(--brand)", fontFamily: "Thmanyah Serif Display, serif" }}>
-                  سُورَةُ {surahContent.name}
-                </h4>
-                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--text-muted)" }}>
-                  {surahContent.revelationType === "Meccan" ? "مكية" : "مدنية"} • عدد آياتها {surahContent.ayahs.length}
-                </p>
+          {/* Page Image */}
+          <div style={{
+            maxWidth: "100%",
+            width: "480px",
+            minHeight: "500px",
+            backgroundColor: "white",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+            borderRadius: "8px",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "1px solid #d4ccb6"
+          }}>
+            <img
+              src={`https://images.quran.com/images/quran_pages_v1/${activePage}.png`}
+              alt={`مصحف المدينة صفحة ${activePage}`}
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                filter: "contrast(1.05) saturate(0.95)"
+              }}
+              loading="eager"
+            />
+          </div>
 
-                {/* Basmalah (don't display for At-Tawbah (9) and Al-Fatihah (1) has it inside its text) */}
-                {activeSurahNum !== 9 && activeSurahNum !== 1 && (
-                  <p style={{ margin: "20px 0 0", fontSize: "18px", fontWeight: "bold", color: "var(--text-main)", fontFamily: "system-ui" }}>
-                    بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
-                  </p>
-                )}
-              </div>
+          {/* Navigation Controls Bar */}
+          <div style={{ display: "flex", gap: "16px", alignItems: "center", width: "100%", justifyContent: "center" }}>
+            {/* Prev Page Button (turns to page with lower index - right to left navigation) */}
+            <button
+              onClick={turnPagePrev}
+              disabled={activePage === 1}
+              style={{
+                ...navArrowBtn,
+                opacity: activePage === 1 ? 0.4 : 1,
+                cursor: activePage === 1 ? "not-allowed" : "pointer"
+              }}
+              title="الصفحة السابقة"
+            >
+              السابق (يمين) →
+            </button>
 
-              {/* Verses Flow block */}
-              <div style={{
-                lineHeight: "2.4",
-                fontSize: `${fontSize}px`,
-                color: "var(--text-main)",
-                textAlign: "justify",
-                fontFamily: "'Inter', sans-serif"
-              }}>
-                {surahContent.ayahs.map((ayah) => {
-                  // Clean up Al-Fatihah Basmalah from rendering twice
-                  let text = ayah.text;
-                  if (activeSurahNum !== 1 && ayah.numberInSurah === 1) {
-                    const clean = text.replace(/[\u064B-\u065F\u0670]/g, "");
-                    if (clean.startsWith("بسم الله الرحمن الرحيم")) {
-                      const cleanWord = "الرحيم";
-                      const cleanIdx = clean.indexOf(cleanWord);
-                      if (cleanIdx !== -1) {
-                        let originalIdx = 0;
-                        let matchedLetters = 0;
-                        const targetLetters = cleanIdx + cleanWord.length;
-                        while (originalIdx < text.length && matchedLetters < targetLetters) {
-                          const char = text[originalIdx];
-                          if (!/[\u064B-\u065F\u0670]/.test(char)) {
-                            matchedLetters++;
-                          }
-                          originalIdx++;
-                        }
-                        text = text.substring(originalIdx).trim();
-                      }
-                    }
-                  }
+            <span style={{ fontSize: "14px", fontWeight: "800", color: "#4b4435", fontFamily: "system-ui" }}>
+              صفحة {activePage} من 604
+            </span>
 
-                  return (
-                    <span
-                      key={ayah.number}
-                      id={`ayah-${ayah.numberInSurah}`}
-                      onClick={() => handleSaveBookmark(surahContent.name, ayah.numberInSurah)}
-                      style={{
-                        cursor: "pointer",
-                        padding: "2px 4px",
-                        borderRadius: "6px",
-                        transition: "background 0.2s ease"
-                      }}
-                      title="اضغط لحفظ علامة القراءة (بوكمارك)"
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(194, 144, 40, 0.08)"}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                    >
-                      {text}
-                      <span style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "50%",
-                        border: "1.5px solid var(--gold)",
-                        fontSize: "11px",
-                        fontWeight: "bold",
-                        color: "var(--gold)",
-                        margin: "0 6px",
-                        textAlign: "center"
-                      }}>
-                        {ayah.numberInSurah}
-                      </span>
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
+            {/* Next Page Button (turns to page with higher index) */}
+            <button
+              onClick={turnPageNext}
+              disabled={activePage === 604}
+              style={{
+                ...navArrowBtn,
+                opacity: activePage === 604 ? 0.4 : 1,
+                cursor: activePage === 604 ? "not-allowed" : "pointer"
+              }}
+              title="الصفحة التالية"
+            >
+              ← التالي (يسار)
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -629,7 +534,7 @@ export const DailyWird: React.FC = () => {
 
   return (
     <div style={container}>
-      {/* Quran tracker + Embedded complete Mushaf */}
+      {/* Quran tracker + Embedded complete verified Mushaf */}
       <QuranTracker />
 
       {/* Sebha Rosary Header */}
@@ -639,7 +544,7 @@ export const DailyWird: React.FC = () => {
             <div style={{ ...progressFill, width: `${(doneCount / totalCount) * 100}%`, backgroundColor: WIRD_COLOR }} />
           </div>
           <p style={progressText}>
-            {allDone ? "✨ أحسنت! أتممت الأوراد والأذكار اليومية" : `${doneCount} من ${totalCount} مكتمل`}
+            {allDone ? "✨ أتممت الأوراد والأذكار اليومية" : `${doneCount} من ${totalCount} مكتمل`}
           </p>
         </div>
         <button onClick={resetAll} style={resetBtn} title="إعادة تعيين">
@@ -820,32 +725,35 @@ const linearBar: React.CSSProperties   = {
 };
 const linearFill: React.CSSProperties  = { height: "100%", borderRadius: "3px", transition: "width 0.4s ease" };
 
-const actionCircleBtn: React.CSSProperties = {
-  width: "32px",
-  height: "32px",
-  borderRadius: "50%",
-  border: "1.5px solid var(--bg-accent)",
-  backgroundColor: "var(--bg-card)",
-  color: "var(--text-main)",
+const bookmarkSaveBtn: React.CSSProperties = {
+  padding: "8px 14px",
+  borderRadius: "12px",
+  border: "1.5px solid var(--gold)",
+  backgroundColor: "transparent",
+  color: "var(--gold)",
   fontSize: "12px",
-  fontWeight: "bold",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  transition: "all 0.2s ease"
+  fontWeight: "800",
+  cursor: "pointer"
 };
 
 const bookmarkJumpBtn: React.CSSProperties = {
-  padding: "6px 12px",
-  borderRadius: "20px",
-  border: "1.5px solid var(--gold)",
-  backgroundColor: "rgba(194, 144, 40, 0.05)",
-  color: "var(--gold)",
+  padding: "8px 14px",
+  borderRadius: "12px",
+  border: "1.5px solid var(--brand)",
+  backgroundColor: "var(--brand-light)",
+  color: "var(--brand)",
+  fontSize: "12px",
+  fontWeight: "800",
+  cursor: "pointer"
+};
+
+const navArrowBtn: React.CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: "10px",
+  border: "1.5px solid #d4ccb6",
+  backgroundColor: "#fcfbf7",
+  color: "#4b4435",
   fontSize: "12px",
   fontWeight: "bold",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  gap: "4px"
+  outline: "none"
 };

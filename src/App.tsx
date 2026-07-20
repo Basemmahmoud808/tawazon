@@ -141,7 +141,7 @@ export default function App() {
     Array(90).fill(false)
   );
 
-  const getInitialPhase = (dayIdx: number) => {
+  /* const getInitialPhase = (dayIdx: number) => {
     if (dayIdx < 30) return 1;
     if (dayIdx < 60) return 2;
     return 3;
@@ -154,9 +154,18 @@ export default function App() {
     today.setHours(0, 0, 0, 0);
     const diffTime = today.getTime() - start.getTime();
     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  })();
+  })(); */
 
-  const [activePhase, setActivePhase] = useState<number>(getInitialPhase(initialDayIndex));
+  const [activePhase, setActivePhase] = useState<number>(() => {
+    const start = new Date(challengeStartDate);
+    start.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - start.getTime();
+    const elapsedDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const phase = Math.floor(elapsedDays / 30) + 1;
+    return Math.max(1, Math.min(3, phase));
+  });
 
 
   const getChallengeDayIndex = () => {
@@ -170,6 +179,10 @@ export default function App() {
   };
 
   const currentDayIndex = getChallengeDayIndex();
+
+  // Strict Real-Time Day Index calculations
+  const todayPhase = Math.floor(currentDayIndex / 30) + 1;
+  const todayLocalIdx = currentDayIndex % 30;
 
   const handleResetChallenge = () => {
     if (window.confirm("هل أنت متأكد من رغبتك في إعادة بدء التحدي من اليوم وتصفير التقدم؟")) {
@@ -756,7 +769,7 @@ export default function App() {
                     const localDayNum = idx + 1;
                     const globalIdx = (activePhase - 1) * 30 + idx;
                     const isDone = daysCompleted[globalIdx];
-                    const isToday = globalIdx === currentDayIndex;
+                    const isToday = activePhase === todayPhase && idx === todayLocalIdx;
 
                     return (
                       <div
