@@ -449,7 +449,7 @@ const QuranTracker: React.FC = () => {
             border: "1px solid #d4ccb6"
           }}>
             <img
-              src={`https://images.quran.com/images/quran_pages_v1/${activePage}.png`}
+              src={`https://raw.githubusercontent.com/GovarJabbar/Quran-PNG/master/${activePage.toString().padStart(3, '0')}.png`}
               alt={`مصحف المدينة صفحة ${activePage}`}
               style={{
                 width: "100%",
