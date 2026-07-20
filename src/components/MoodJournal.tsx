@@ -3,6 +3,7 @@ import React, { useState, useRef } from "react";
 export interface JournalEntry {
   id: string;
   date: string;
+  rawDate: string;
   mood: "energetic" | "happy" | "calm" | "tired" | "anxious";
   note: string;
   imageUrl?: string; // base64 image attached to this entry
@@ -10,7 +11,7 @@ export interface JournalEntry {
 
 interface MoodJournalProps {
   entries: JournalEntry[];
-  onAddEntry: (mood: JournalEntry["mood"], note: string, imageUrl?: string) => void;
+  onAddEntry: (mood: JournalEntry["mood"], note: string, imageUrl?: string, rawDate?: string) => void;
 }
 
 // ─── Mood SVG Icons ───────────────────────────────────────────────────────────
@@ -103,7 +104,7 @@ export const MoodJournal: React.FC<MoodJournalProps> = ({ entries, onAddEntry })
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMood) return;
-    onAddEntry(selectedMood, note, imagePreview ?? undefined);
+    onAddEntry(selectedMood, note, imagePreview ?? undefined, new Date().toDateString());
     setNote("");
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";

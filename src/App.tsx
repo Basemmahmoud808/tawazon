@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useAdminGuard } from "./hooks/useAdminGuard";
 import { Dashboard } from "./components/Dashboard";
@@ -8,15 +8,16 @@ import { GardenView } from "./components/GardenView";
 import { MoodJournal } from "./components/MoodJournal";
 import type { JournalEntry } from "./components/MoodJournal";
 import { Login } from "./components/Login";
-import { AdminPanel } from "./components/AdminPanel";
-import { PrayerTimes } from "./components/PrayerTimes";
-import { Athkar } from "./components/Athkar";
-import { DailyWird } from "./components/DailyWird";
 import { Challenge90Days } from "./components/Challenge90Days";
 
 // Archive imports
-import { HistoryArchive } from "./components/HistoryArchive";
 import type { DailyLog } from "./components/HistoryArchive";
+
+const AdminPanel = lazy(() => import("./components/AdminPanel").then((module) => ({ default: module.AdminPanel })));
+const PrayerTimes = lazy(() => import("./components/PrayerTimes").then((module) => ({ default: module.PrayerTimes })));
+const Athkar = lazy(() => import("./components/Athkar").then((module) => ({ default: module.Athkar })));
+const DailyWird = lazy(() => import("./components/DailyWird").then((module) => ({ default: module.DailyWird })));
+const HistoryArchive = lazy(() => import("./components/HistoryArchive").then((module) => ({ default: module.HistoryArchive })));
 
 // Firebase imports
 import { signOut, onAuthStateChanged } from "firebase/auth";
@@ -278,8 +279,8 @@ export default function App() {
     const todayDateStr = new Date().toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     
     // Grab the latest logged mood & note written today
-    const todayEntries = journalEntries.slice(-1);
-    const latestEntry = todayEntries.length > 0 ? todayEntries[0] : null;
+    const todayEntries = journalEntries.filter((entry) => entry.rawDate === todayRaw);
+    const latestEntry = todayEntries.length > 0 ? todayEntries[todayEntries.length - 1] : null;
     
     const completedHabitNames = habits.filter((h) => h.completed).map((h) => h.name);
     
@@ -425,10 +426,12 @@ export default function App() {
   };
 
   // Journal handlers (now supports image)
-  const handleAddJournalEntry = (mood: JournalEntry["mood"], note: string, imageUrl?: string) => {
+  const handleAddJournalEntry = (mood: JournalEntry["mood"], note: string, imageUrl?: string, rawDate?: string) => {
+    const entryDate = rawDate ?? new Date().toDateString();
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString("ar-EG", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+      rawDate: entryDate,
       mood,
       note,
       imageUrl,
@@ -661,7 +664,7 @@ export default function App() {
               <Dashboard 
                 completedCount={completedCount} 
                 totalCount={totalCount}
-                moodCount={new Set(journalEntries.map(e => e.date.split("،")[0])).size}
+                moodCount={new Set(journalEntries.map((entry) => entry.rawDate)).size}
                 todayMood={todayMood}
               />
               <Challenge90Days />
@@ -674,33 +677,43 @@ export default function App() {
         )}
 
         {activeTab === "archive" && (
-          <div style={focusedContainerStyle}>
-            <HistoryArchive logs={dailyLogs} />
-          </div>
+          <Suspense fallback={<div style={focusedContainerStyle}><div className="card">جاري تحميل سجل الأيام...</div></div>}>
+            <div style={focusedContainerStyle}>
+              <HistoryArchive logs={dailyLogs} />
+            </div>
+          </Suspense>
         )}
 
         {activeTab === "prayer" && (
-          <div style={focusedContainerStyle}>
-            <PrayerTimes />
-          </div>
+          <Suspense fallback={<div style={focusedContainerStyle}><div className="card">جاري تحميل مواقيت الصلاة...</div></div>}>
+            <div style={focusedContainerStyle}>
+              <PrayerTimes />
+            </div>
+          </Suspense>
         )}
 
         {activeTab === "athkar" && (
-          <div style={focusedContainerStyle}>
-            <Athkar />
-          </div>
+          <Suspense fallback={<div style={focusedContainerStyle}><div className="card">جاري تحميل الأذكار...</div></div>}>
+            <div style={focusedContainerStyle}>
+              <Athkar />
+            </div>
+          </Suspense>
         )}
 
         {activeTab === "wird" && (
-          <div style={focusedContainerStyle}>
-            <DailyWird />
-          </div>
+          <Suspense fallback={<div style={focusedContainerStyle}><div className="card">جاري تحميل الورد اليومي...</div></div>}>
+            <div style={focusedContainerStyle}>
+              <DailyWird />
+            </div>
+          </Suspense>
         )}
 
         {activeTab === "admin" && isAdmin && (
-          <div style={{ maxWidth: "1100px", margin: "0 auto", width: "100%" }}>
-            <AdminPanel />
-          </div>
+          <Suspense fallback={<div style={{ maxWidth: "1100px", margin: "0 auto", width: "100%" }}><div className="card">جاري تحميل لوحة الإدارة...</div></div>}>
+            <div style={{ maxWidth: "1100px", margin: "0 auto", width: "100%" }}>
+              <AdminPanel />
+            </div>
+          </Suspense>
         )}
       </main>
 
@@ -748,38 +761,42 @@ const dateBarStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  fontSize: "13px",
+  fontSize: "11px",
   color: "var(--text-muted)",
   marginBottom: "12px",
-  padding: "0 4px",
+  padding: "4px 10px",
   fontWeight: "600",
+  background: "linear-gradient(180deg, rgba(231,235,221,0.70), rgba(220,228,206,0.45))",
+  border: "1px solid rgba(28,108,77,0.08)",
+  borderRadius: "16px",
 };
 
 const resetBtnStyle: React.CSSProperties = {
-  background: "none",
-  border: "1px solid var(--bg-accent)",
-  color: "var(--text-muted)",
-  padding: "5px 14px",
-  borderRadius: "var(--radius-sm)",
+  background: "linear-gradient(180deg, rgba(231,235,221,0.95), rgba(220,228,206,0.98))",
+  border: "1px solid rgba(28,108,77,0.12)",
+  color: "var(--brand)",
+  padding: "5px 12px",
+  borderRadius: "12px",
   fontFamily: "inherit",
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: "600",
   cursor: "pointer",
   transition: "var(--transition)",
+  boxShadow: "0 6px 14px rgba(22,38,31,0.05)",
 };
 
 const columnStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "24px",
+  gap: "20px",
 };
 
 const focusedContainerStyle: React.CSSProperties = {
-  maxWidth: "600px",
+  maxWidth: "640px",
   margin: "40px auto 0",
   display: "flex",
   flexDirection: "column",
-  gap: "24px",
+  gap: "20px",
 };
 
 
@@ -788,16 +805,17 @@ const userAvatarRow: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: "8px",
-  backgroundColor: "var(--bg-accent)",
-  padding: "5px 10px 5px 6px",
-  borderRadius: "30px",
-  border: "1px solid var(--bg-accent)",
+  background: "linear-gradient(180deg, rgba(231,235,221,0.90), rgba(220,228,206,0.98))",
+  padding: "5px 10px 5px 5px",
+  borderRadius: "999px",
+  border: "1px solid rgba(28,108,77,0.10)",
   transition: "var(--transition)",
+  boxShadow: "0 6px 14px rgba(22,38,31,0.05)",
 };
 
 const userAvatarCircle: React.CSSProperties = {
-  width: "28px",
-  height: "28px",
+  width: "26px",
+  height: "26px",
   borderRadius: "50%",
   background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%)",
   color: "white",
@@ -805,14 +823,14 @@ const userAvatarCircle: React.CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   fontWeight: "800",
-  fontSize: "13px",
+  fontSize: "12px",
   flexShrink: 0,
-  boxShadow: "0 2px 6px rgba(26,107,74,0.3)",
+  boxShadow: "0 3px 8px rgba(28,108,77,0.20)",
 };
 
 const userNameStyle: React.CSSProperties = {
   color: "var(--text-main)",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: "700",
   lineHeight: 1.2,
 };
@@ -822,7 +840,7 @@ const logoutBtnStyle: React.CSSProperties = {
   border: "none",
   color: "var(--text-muted)",
   cursor: "pointer",
-  fontSize: "11px",
+  fontSize: "10px",
   fontFamily: "inherit",
   padding: 0,
   fontWeight: "500",
@@ -830,16 +848,16 @@ const logoutBtnStyle: React.CSSProperties = {
 };
 
 const themeToggleStyle: React.CSSProperties = {
-  background: "var(--bg-card)",
-  border: "1px solid var(--bg-accent)",
-  borderRadius: "var(--radius-sm)",
-  width: "34px",
-  height: "34px",
+  background: "linear-gradient(180deg, rgba(231,235,221,0.96), rgba(220,228,206,0.98))",
+  border: "1px solid rgba(28,108,77,0.10)",
+  borderRadius: "12px",
+  width: "32px",
+  height: "32px",
   cursor: "pointer",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  boxShadow: "var(--shadow-xs)",
+  boxShadow: "0 6px 14px rgba(22,38,31,0.05)",
   outline: "none",
   transition: "var(--transition)",
   color: "var(--text-muted)",
@@ -848,10 +866,11 @@ const themeToggleStyle: React.CSSProperties = {
 
 // ─── Footer Styles (minimal & clean) ────────────────────────────────────────
 const footerStyle: React.CSSProperties = {
-  borderTop: "1px solid var(--bg-accent)",
-  padding: "32px 24px",
-  marginTop: "40px",
+  borderTop: "1px solid rgba(28,108,77,0.08)",
+  padding: "24px 24px 22px",
+  marginTop: "32px",
   textAlign: "center",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.40), rgba(255,255,255,0.16))",
 };
 
 const footerBrandName: React.CSSProperties = {

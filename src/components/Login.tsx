@@ -6,6 +6,9 @@ import {
   signInWithPhoneNumber, 
   RecaptchaVerifier, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
   FacebookAuthProvider
 } from "firebase/auth";
 import type { ConfirmationResult } from "firebase/auth";
@@ -17,7 +20,7 @@ interface LoginProps {
   onToggleTheme: () => void;
 }
 
-type LoginMethod = "email" | "phone" | "facebook";
+type LoginMethod = "email" | "phone" | "google" | "facebook";
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleTheme }) => {
   const [method, setMethod] = useState<LoginMethod>("email");
@@ -30,6 +33,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
   // Phone states
   const [phone, setPhone] = useState("");
+  const [submittedPhone, setSubmittedPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [otpTimer, setOtpTimer] = useState(60);
@@ -65,6 +69,22 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
       }
     };
   }, []);
+
+  // Complete OAuth logins after a redirect flow.
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (!result?.user) return;
+        const user = result.user;
+        const methodFromProvider = user.providerData[0]?.providerId === "facebook.com" ? "facebook" : "google";
+        onLoginSuccess(user.displayName || user.email?.split("@")[0] || (methodFromProvider === "facebook" ? "مستخدم فيسبوك" : "مستخدم Google"), methodFromProvider);
+      })
+      .catch((error: any) => {
+        if (error?.code) {
+          setErrorMsg(getArabicErrorMessage(error.code));
+        }
+      });
+  }, [onLoginSuccess]);
 
   // Translate Firebase Auth errors to friendly Arabic messages
   const getArabicErrorMessage = (code: string) => {
@@ -168,6 +188,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       setConfirmationResult(confirmation);
+      setSubmittedPhone(formattedPhone);
       setOtpSent(true);
       setOtpTimer(60);
     } catch (error: any) {
@@ -212,21 +233,32 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
     }
   };
 
-  // --- Real Facebook Authentication ---
-  const handleFacebookLogin = async () => {
+  const handleOAuthLogin = async (providerType: "google" | "facebook") => {
     setErrorMsg("");
     setLoading(true);
-    setLoadingMessage("جاري فتح بوابة تسجيل دخول Facebook...");
+    setLoadingMessage(providerType === "google" ? "جاري فتح بوابة تسجيل الدخول عبر Google..." : "جاري فتح بوابة تسجيل الدخول عبر Facebook...");
 
     try {
-      const provider = new FacebookAuthProvider();
-      // Configure Facebook Auth Scope if needed
-      const result = await signInWithPopup(auth, provider);
-      onLoginSuccess(result.user.displayName || "مستخدم فيسبوك", "facebook");
+      const provider = providerType === "google" ? new GoogleAuthProvider() : new FacebookAuthProvider();
+      if (providerType === "google") {
+        provider.setCustomParameters({ prompt: "select_account" });
+      }
+
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        onLoginSuccess(user.displayName || user.email?.split("@")[0] || (providerType === "google" ? "مستخدم Google" : "مستخدم فيسبوك"), providerType);
+      } catch (error: any) {
+        if (error?.code === "auth/popup-blocked" || error?.code === "auth/cancelled-popup-request") {
+          await signInWithRedirect(auth, provider);
+        } else {
+          throw error;
+        }
+      }
     } catch (error: any) {
       // Handle closed popup specifically
       if (error.code === "auth/popup-closed-by-user") {
-        setErrorMsg("تم إلغاء عملية تسجيل الدخول بفيسبوك بواسطة المستخدم.");
+        setErrorMsg(providerType === "google" ? "تم إلغاء عملية تسجيل الدخول بواسطة Google." : "تم إلغاء عملية تسجيل الدخول بفيسبوك بواسطة المستخدم.");
       } else {
         setErrorMsg(getArabicErrorMessage(error.code));
       }
@@ -264,7 +296,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
       <div style={blobLeftStyle} />
       <div style={blobRightStyle} />
 
-      <div style={loginCardStyle}>
+      <div className="login-card-responsive" style={loginCardStyle}>
         {/* Logo and Greeting */}
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           <div style={logoIconStyle} className="emoji-accent">🌿</div>
@@ -286,7 +318,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
           <>
             {/* Tabs for choosing login method */}
             {!otpSent && (
-              <div style={tabsContainerStyle}>
+              <div className="login-tabs-responsive" style={tabsContainerStyle}>
                 <button
                   onClick={() => { setMethod("email"); setErrorMsg(""); }}
                   style={{ ...tabBtnStyle, borderBottomColor: method === "email" ? "var(--color-sage)" : "transparent", color: method === "email" ? "var(--color-sage)" : "var(--text-muted)" }}
@@ -298,6 +330,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                   style={{ ...tabBtnStyle, borderBottomColor: method === "phone" ? "var(--color-sage)" : "transparent", color: method === "phone" ? "var(--color-sage)" : "var(--text-muted)" }}
                 >
                   رقم الهاتف
+                </button>
+                <button
+                  onClick={() => { setMethod("google"); setErrorMsg(""); }}
+                  style={{ ...tabBtnStyle, borderBottomColor: method === "google" ? "var(--color-sage)" : "transparent", color: method === "google" ? "var(--color-sage)" : "var(--text-muted)" }}
+                >
+                  جوجل
                 </button>
                 <button
                   onClick={() => { setMethod("facebook"); setErrorMsg(""); }}
@@ -420,7 +458,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                   <form onSubmit={handlePhoneVerifyOtp} style={formStyle}>
                     <div style={{ textAlign: "center", marginBottom: "8px" }}>
                       <p style={{ fontSize: "14px", color: "var(--text-main)" }}>
-                        تم إرسال الرمز للهاتف: <strong>+966 {phone}</strong>
+                        تم إرسال الرمز للهاتف: <strong>{submittedPhone || `${countryCode} ${phone}`}</strong>
                       </p>
                       <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
                         يرجى إدخال الرمز المكون من 6 أرقام المستلم في رسالة SMS
@@ -461,12 +499,29 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
             )}
 
             {/* --- FACEBOOK LOGIN --- */}
+            {method === "google" && (
+              <div style={{ ...formStyle, alignItems: "center", padding: "16px 0" }}>
+                <p style={{ fontSize: "14px", color: "var(--text-muted)", textAlign: "center", marginBottom: "16px" }}>
+                  استخدم Google للوصول السريع إلى حسابك مع مزامنة آمنة.
+                </p>
+                <button onClick={() => handleOAuthLogin("google")} style={googleBtnStyle}>
+                  <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true" style={{ marginLeft: "8px" }}>
+                    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.645 32.658 29.296 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.156 7.967 3.047l5.657-5.657C34.075 6.053 29.336 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.651-.389-3.917z" />
+                    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.156 7.967 3.047l5.657-5.657C34.075 6.053 29.336 4 24 4c-7.818 0-14.656 4.415-17.694 10.691z" />
+                    <path fill="#4CAF50" d="M24 44c5.236 0 10.005-2.004 13.563-5.272l-6.269-5.288C29.31 35.091 26.868 36 24 36c-5.274 0-9.608-3.314-11.281-7.946l-6.522 5.025C9.192 39.986 16.006 44 24 44z" />
+                    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-1.005 2.588-2.829 4.708-5.009 6.44l.003-.002 6.269 5.288C35.99 37.337 40 31.612 40 24c0-1.341-.138-2.651-.389-3.917z" />
+                  </svg>
+                  الدخول بواسطة Google
+                </button>
+              </div>
+            )}
+
             {method === "facebook" && (
               <div style={{ ...formStyle, alignItems: "center", padding: "16px 0" }}>
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", textAlign: "center", marginBottom: "16px" }}>
                   سجل دخولك بنقرة زر واحدة عبر ربط حساب فيسبوك بأمان.
                 </p>
-                <button onClick={handleFacebookLogin} style={facebookBtnStyle}>
+                <button onClick={() => handleOAuthLogin("facebook")} style={facebookBtnStyle}>
                   <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style={{ marginLeft: "8px" }}>
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
@@ -503,87 +558,96 @@ const loginWrapperStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "var(--bg-primary)",
+  background:
+    "radial-gradient(circle at 15% 20%, rgba(28,108,77,0.10), transparent 28%), radial-gradient(circle at 85% 80%, rgba(224,177,93,0.12), transparent 26%), linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.0) 24%), var(--bg-primary)",
   position: "relative",
   overflow: "hidden",
-  padding: "20px",
+  padding: "clamp(16px, 3vw, 32px)",
   transition: "background-color 0.4s ease",
 };
 
 const blobLeftStyle: React.CSSProperties = {
   position: "absolute",
-  width: "300px",
-  height: "300px",
+  width: "420px",
+  height: "420px",
   borderRadius: "50%",
-  background: "radial-gradient(circle, var(--color-sage-light) 0%, rgba(250,248,245,0) 70%)",
-  left: "-100px",
-  top: "10%",
+  background: "radial-gradient(circle, rgba(28,108,77,0.16) 0%, rgba(250,248,245,0) 70%)",
+  left: "-160px",
+  top: "-60px",
   zIndex: 0,
   pointerEvents: "none",
 };
 
 const blobRightStyle: React.CSSProperties = {
   position: "absolute",
-  width: "350px",
-  height: "350px",
+  width: "460px",
+  height: "460px",
   borderRadius: "50%",
-  background: "radial-gradient(circle, var(--color-meditate-light) 0%, rgba(250,248,245,0) 70%)",
-  right: "-100px",
-  bottom: "10%",
+  background: "radial-gradient(circle, rgba(224,177,93,0.15) 0%, rgba(250,248,245,0) 70%)",
+  right: "-180px",
+  bottom: "-120px",
   zIndex: 0,
   pointerEvents: "none",
 };
 
 const loginCardStyle: React.CSSProperties = {
-  maxWidth: "450px",
+  maxWidth: "min(94vw, 520px)",
   width: "100%",
-  backgroundColor: "var(--bg-card)",
-  borderRadius: "var(--radius-lg)",
-  padding: "32px 24px",
-  boxShadow: "var(--shadow-soft)",
-  border: "1px solid var(--bg-accent)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,253,248,0.98) 100%)",
+  borderRadius: "30px",
+  padding: "clamp(24px, 4vw, 36px) clamp(18px, 4vw, 32px)",
+  boxShadow: "0 28px 70px rgba(22,38,31,0.11), 0 4px 14px rgba(22,38,31,0.04)",
+  border: "1px solid rgba(28,108,77,0.10)",
   zIndex: 1,
   position: "relative",
-  transition: "background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease",
+  transition: "background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease",
+  animation: "fadeInUp 0.45s var(--ease-out) both",
+  backdropFilter: "blur(18px)",
 };
 
 const logoIconStyle: React.CSSProperties = {
-  width: "60px",
-  height: "60px",
-  backgroundColor: "var(--color-sage-light)",
-  borderRadius: "var(--radius-md)",
+  width: "64px",
+  height: "64px",
+  background: "linear-gradient(180deg, var(--brand-light), rgba(255,255,255,0.95))",
+  borderRadius: "20px",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "32px",
-  marginBottom: "12px",
-  boxShadow: "var(--shadow-soft)",
+  fontSize: "34px",
+  marginBottom: "14px",
+  boxShadow: "0 12px 30px rgba(28,108,77,0.10)",
+  border: "1px solid rgba(28,108,77,0.08)",
 };
 
 const tabsContainerStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-around",
-  borderBottom: "1px solid var(--bg-accent)",
-  marginBottom: "24px",
+  display: "grid",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gap: "8px",
+  marginBottom: "20px",
+  paddingBottom: "16px",
+  borderBottom: "1px solid rgba(28,108,77,0.10)",
 };
 
 const tabBtnStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(246,241,232,0.95))",
+  border: "1px solid rgba(28,108,77,0.08)",
   borderBottom: "2px solid transparent",
-  padding: "10px",
-  fontSize: "14px",
-  fontWeight: "bold",
+  padding: "12px 10px",
+  fontSize: "12px",
+  fontWeight: "700",
   cursor: "pointer",
   color: "var(--text-muted)",
   fontFamily: "inherit",
   transition: "var(--transition-normal)",
+  minHeight: "46px",
+  borderRadius: "var(--radius-sm)",
+  boxShadow: "0 4px 14px rgba(22,38,31,0.04)",
 };
 
 const formStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "16px",
+  gap: "14px",
   width: "100%",
 };
 
@@ -620,21 +684,23 @@ const phoneInputWrapperStyle: React.CSSProperties = {
   backgroundColor: "var(--bg-primary)",
   overflow: "hidden",
   direction: "ltr", // Left to right formatting for numbers
+  minHeight: "48px",
 };
 
 const phonePrefixStyle: React.CSSProperties = {
-  padding: "12px 16px",
+  padding: "12px 14px",
   backgroundColor: "var(--bg-accent)",
   color: "var(--text-muted)",
   fontSize: "14px",
   fontWeight: "500",
   borderRight: "1px solid var(--bg-accent)",
+  whiteSpace: "nowrap",
 };
 
 const phoneInputStyle: React.CSSProperties = {
   border: "none",
   outline: "none",
-  padding: "12px 16px",
+  padding: "12px 14px",
   width: "100%",
   fontFamily: "inherit",
   fontSize: "14px",
@@ -644,17 +710,36 @@ const phoneInputStyle: React.CSSProperties = {
 };
 
 const submitBtnStyle: React.CSSProperties = {
-  backgroundColor: "var(--color-sage)",
+  background: "linear-gradient(180deg, var(--brand-mid), var(--brand))",
   color: "var(--text-light)",
   border: "none",
   fontFamily: "inherit",
-  fontSize: "15px",
+  fontSize: "16px",
   fontWeight: "bold",
-  padding: "12px",
-  borderRadius: "var(--radius-sm)",
+  padding: "14px 16px",
+  borderRadius: "14px",
   cursor: "pointer",
   transition: "var(--transition-normal)",
-  boxShadow: "0 4px 12px rgba(125, 156, 130, 0.15)",
+  boxShadow: "0 10px 24px rgba(28,108,77,0.18)",
+};
+
+const googleBtnStyle: React.CSSProperties = {
+  background: "linear-gradient(180deg, #ffffff, #fbfaf5)",
+  color: "#1f2937",
+  border: "1px solid rgba(17,24,39,0.10)",
+  fontFamily: "inherit",
+  fontSize: "15px",
+  fontWeight: "700",
+  padding: "14px 18px",
+  borderRadius: "14px",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "6px",
+  width: "100%",
+  boxShadow: "0 8px 20px rgba(17,24,39,0.07)",
+  transition: "var(--transition-normal)",
 };
 
 const toggleLinkStyle: React.CSSProperties = {
@@ -674,8 +759,8 @@ const facebookBtnStyle: React.CSSProperties = {
   fontFamily: "inherit",
   fontSize: "15px",
   fontWeight: "bold",
-  padding: "12px 24px",
-  borderRadius: "var(--radius-sm)",
+  padding: "14px 18px",
+  borderRadius: "14px",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
@@ -705,13 +790,13 @@ const dividerTextStyle: React.CSSProperties = {
 
 const guestBtnStyle: React.CSSProperties = {
   background: "none",
-  border: "1px solid var(--bg-accent)",
+  border: "1px solid rgba(28,108,77,0.16)",
   color: "var(--text-muted)",
   fontFamily: "inherit",
   fontSize: "14px",
   fontWeight: "500",
-  padding: "10px",
-  borderRadius: "var(--radius-sm)",
+  padding: "13px 12px",
+  borderRadius: "14px",
   cursor: "pointer",
   width: "100%",
   transition: "var(--transition-normal)",
@@ -751,13 +836,13 @@ const cornerThemeToggleStyle: React.CSSProperties = {
   position: "absolute",
   top: "20px",
   left: "20px",
-  background: "var(--bg-card)",
-  border: "1px solid var(--bg-accent)",
-  borderRadius: "var(--radius-sm)",
-  padding: "8px 12px",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,241,232,0.92))",
+  border: "1px solid rgba(28,108,77,0.08)",
+  borderRadius: "14px",
+  padding: "10px 12px",
   cursor: "pointer",
   fontSize: "16px",
-  boxShadow: "var(--shadow-soft)",
+  boxShadow: "0 10px 22px rgba(22,38,31,0.08)",
   outline: "none",
   transition: "background-color 0.4s ease, border-color 0.4s ease",
   zIndex: 10,

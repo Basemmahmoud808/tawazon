@@ -1,12 +1,9 @@
-name: Deploy to GitHub Pages
+name: Deploy to Firebase Hosting
 
 on:
   push:
     branches:
       - main
-
-permissions:
-  contents: write
 
 jobs:
   build-and-deploy:
@@ -21,8 +18,10 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Deploy to Firebase Hosting 🚀
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          folder: dist # The folder Vite outputs to
-          branch: gh-pages # The branch the action should deploy to
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TAWAZAN }}
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          channelId: live

@@ -1,4 +1,39 @@
-# React + TypeScript + Vite
+# Tawazon
+
+توازن هو تطبيق عربي للروتين اليومي، تتبع العادات، الأذكار، والورد اليومي.
+
+## النشر على tawazan.tech
+
+المشروع مهيأ الآن لـ Firebase Hosting، وهذا هو المسار المناسب لربط الدومين المخصص `tawazan.tech`.
+
+### المطلوب خارج الكود
+
+1. إنشاء/اختيار مشروع Firebase.
+2. إضافة الدومين المخصص من Firebase Hosting ثم إعداد سجلات DNS عند مزود الدومين.
+3. إضافة أسرار GitHub Actions التالية:
+  - `FIREBASE_SERVICE_ACCOUNT_TAWAZAN`
+  - `FIREBASE_PROJECT_ID`
+
+### النشر المحلي
+
+```bash
+npm ci
+npm run build
+```
+
+### ملاحظات
+
+- التطبيق يعمل كـ SPA، لذلك `firebase.json` مضبوط لإعادة التوجيه إلى `index.html`.
+- عند إضافة `tawazan.tech` في Firebase Hosting، يمكن أيضًا تفعيل `www.tawazan.tech` وإعادة التوجيه إلى النطاق الأساسي.
+
+## خطوات الإكمال السريعة
+
+1. افتح Firebase Console وأنشئ أو اختر مشروعًا.
+2. أضف موقع Hosting ثم اربط `tawazan.tech` و`www.tawazan.tech`.
+3. أضف سجلات DNS التي يطلبها Firebase عند مزود الدومين.
+4. أضف أسرار GitHub Actions المطلوبة ثم ادفع إلى `main`.
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
