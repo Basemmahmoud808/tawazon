@@ -153,10 +153,24 @@ export default function App() {
 
   const currentDayIndex = getChallengeDayIndex();
 
+  const getChallengePhaseAndDay = () => {
+    if (currentDayIndex < 30) {
+      return { phase: "المرحلة الأولى", day: currentDayIndex + 1 };
+    } else if (currentDayIndex < 60) {
+      return { phase: "المرحلة الثانية", day: currentDayIndex - 30 + 1 };
+    } else if (currentDayIndex < 90) {
+      return { phase: "المرحلة الثالثة", day: currentDayIndex - 60 + 1 };
+    } else {
+      return { phase: "مكتمل 🎉", day: 90 };
+    }
+  };
+
+  const { phase: challengePhase, day: challengeDay } = getChallengePhaseAndDay();
+
   const handleResetChallenge = () => {
     if (window.confirm("هل أنت متأكد من رغبتك في إعادة بدء تحدي الـ 90 يوماً من اليوم وتصفير التقدم؟")) {
       setChallengeStartDate(new Date().toISOString());
-      setDaysCompleted(Array(90).fill(false));
+      setDaysCompleted(Array(30).fill(false));
     }
   };
 
@@ -693,7 +707,7 @@ export default function App() {
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <span style={{ ...monthTitleStyle, color: "var(--gold)" }}>
                       {currentDayIndex >= 0 && currentDayIndex < 90 
-                        ? `اليوم ${currentDayIndex + 1} من 90` 
+                        ? `${challengePhase} (اليوم ${challengeDay} من 30)` 
                         : "مكتمل 🎉"}
                     </span>
                     <button
@@ -840,7 +854,12 @@ export default function App() {
           </div>
         </div>
 
-        <p style={footerCredit}>🌿 جميع الحقوق محفوظة لـ توازن © {new Date().getFullYear()}</p>
+        
+        <p style={{ ...footerCredit, marginTop: "8px", fontWeight: "bold", color: "var(--brand)" }}>
+          تم التطوير بواسطة باسم محمود 🌿
+        </p>
+        <p style={footerCredit}>جميع الحقوق محفوظة لـ توازن © {new Date().getFullYear()}</p>
+
       </footer>
     </div>
   );

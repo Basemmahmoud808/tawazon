@@ -531,8 +531,8 @@ const QuranTracker: React.FC = () => {
                 {surahContent.ayahs.map((ayah) => {
                   // Clean up Al-Fatihah Basmalah from rendering twice
                   let text = ayah.text;
-                  if (activeSurahNum !== 1 && ayah.numberInSurah === 1 && text.startsWith("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ")) {
-                    text = text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "").trim();
+                  if (activeSurahNum !== 1 && ayah.numberInSurah === 1) {
+                    text = text.replace(/^بِسْمِ.*?الرَّحِيمِ\s*/, "").trim();
                   }
 
                   return (
