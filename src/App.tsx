@@ -46,6 +46,64 @@ const MOCK_DAILY_LOGS: DailyLog[] = [
 ];
 
 export default function App() {
+  const [newHabitName, setNewHabitName] = useState("");
+  const [prayers, setPrayers] = useState<{ arabicName: string; time: string }[]>([]);
+
+  // Fetch real prayer times for Cairo/Egypt or fallback
+  useEffect(() => {
+    const stored = localStorage.getItem("tawazon_prayers");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.date === new Date().toDateString()) {
+          setPrayers(parsed.prayers);
+          return;
+        }
+      } catch {}
+    }
+
+    fetch("https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=5")
+      .then(res => res.json())
+      .then(json => {
+        const timings = json.data.timings;
+        const PRAYER_NAMES = [
+          { name: "Fajr",   arabicName: "الفجر" },
+          { name: "Dhuhr",  arabicName: "الظهر" },
+          { name: "Asr",    arabicName: "العصر" },
+          { name: "Maghrib",arabicName: "المغرب" },
+          { name: "Isha",   arabicName: "العشاء" },
+        ];
+        const built = PRAYER_NAMES.map(p => ({
+          arabicName: p.arabicName,
+          time: timings[p.name]?.slice(0, 5) || "--:--",
+        }));
+        setPrayers(built);
+        localStorage.setItem("tawazon_prayers", JSON.stringify({ date: new Date().toDateString(), prayers: built }));
+      })
+      .catch(() => {
+        setPrayers([
+          { arabicName: "الفجر", time: "03:32" },
+          { arabicName: "الظهر", time: "12:02" },
+          { arabicName: "العصر", time: "15:39" },
+          { arabicName: "المغرب", time: "19:01" },
+          { arabicName: "العشاء", time: "20:31" },
+        ]);
+      });
+  }, []);
+
+  const handleAddCustomHabit = (e: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newHabitName.trim()) return;
+    const newHabit: Habit = {
+      id: Date.now().toString(),
+      name: newHabitName.trim(),
+      completed: false,
+      category: "mindfulness" as const,
+    };
+    setHabits([...habits, newHabit]);
+    setNewHabitName("");
+  };
+
   const [habits, setHabits] = useLocalStorage<Habit[]>("tawazon_habits", DEFAULT_HABITS);
   const [activeTab, setActiveTab] = useState<"home" | "archive" | "prayer" | "athkar" | "wird" | "admin">("home");
   const isAdmin = useAdminGuard();
@@ -422,26 +480,22 @@ export default function App() {
                 <div style={prayerTimesBannerStyle}>
                   <h4 style={prayerBannerTitleStyle}>مواقيت الصلاة</h4>
                   <div style={prayerBannerTimesGridStyle}>
-                    <div style={prayerBannerColStyle}>
-                      <span style={prayerValueStyle}>0:10</span>
-                      <span style={prayerLabelStyle}>الفجر</span>
-                    </div>
-                    <div style={prayerBannerColStyle}>
-                      <span style={prayerValueStyle}>0:15</span>
-                      <span style={prayerLabelStyle}>الظهر</span>
-                    </div>
-                    <div style={prayerBannerColStyle}>
-                      <span style={prayerValueStyle}>0:33</span>
-                      <span style={prayerLabelStyle}>العصر</span>
-                    </div>
-                    <div style={prayerBannerColStyle}>
-                      <span style={prayerValueStyle}>0:27</span>
-                      <span style={prayerLabelStyle}>المغرب</span>
-                    </div>
-                    <div style={prayerBannerColStyle}>
-                      <span style={prayerValueStyle}>:05</span>
-                      <span style={prayerLabelStyle}>العشاء</span>
-                    </div>
+                    {prayers.length > 0 ? (
+                      prayers.map((p, idx) => (
+                        <div key={idx} style={prayerBannerColStyle}>
+                          <span style={prayerValueStyle}>{p.time}</span>
+                          <span style={prayerLabelStyle}>{p.arabicName}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الفجر</span></div>
+                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الظهر</span></div>
+                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العصر</span></div>
+                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>المغرب</span></div>
+                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العشاء</span></div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -459,26 +513,86 @@ export default function App() {
                           borderColor: habit.completed ? "rgba(17,91,61,0.15)" : "var(--bg-accent)",
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
                           <span style={checklistIconStyle}>🌿</span>
-                          <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-main)" }}>
+                          <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-main)", textAlign: "right" }}>
                             {habit.name}
                           </span>
                         </div>
                         
-                        <div style={{
-                          ...checklistCheckboxStyle,
-                          backgroundColor: habit.completed ? "var(--brand)" : "transparent",
-                          borderColor: habit.completed ? "var(--brand)" : "var(--text-muted)",
-                        }}>
-                          {habit.completed && (
-                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="1 4 4 7 9 1" />
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHabits(habits.filter((h) => h.id !== habit.id));
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              color: "var(--text-muted)",
+                              padding: "4px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            title="حذف العادة"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                             </svg>
-                          )}
+                          </button>
+
+                          <div style={{
+                            ...checklistCheckboxStyle,
+                            backgroundColor: habit.completed ? "var(--brand)" : "transparent",
+                            borderColor: habit.completed ? "var(--brand)" : "var(--text-muted)",
+                          }}>
+                            {habit.completed && (
+                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="1 4 4 7 9 1" />
+                              </svg>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
+                    
+                    {/* Add Custom Habit Form */}
+                    <form onSubmit={handleAddCustomHabit} style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                      <input
+                        type="text"
+                        placeholder="أضف عادة جديدة..."
+                        value={newHabitName}
+                        onChange={(e) => setNewHabitName(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid var(--bg-accent)",
+                          backgroundColor: "transparent",
+                          color: "var(--text-main)",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        style={{
+                          background: "var(--brand)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "10px",
+                          padding: "0 14px",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                        }}
+                      >
+                        +
+                      </button>
+                    </form>
                   </div>
                 </div>
               </div>
