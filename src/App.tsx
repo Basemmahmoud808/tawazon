@@ -46,6 +46,18 @@ const MOCK_DAILY_LOGS: DailyLog[] = [
 ];
 
 export default function App() {
+  const [isSummerTime, setIsSummerTime] = useLocalStorage<boolean>("tawazon_use_summer_time", true);
+  const [challengeTitle, setChallengeTitle] = useLocalStorage<string>("tawazon_90day_challenge_title", "التزام بالرياضة والقراءة اليومية");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+  // Shift timing by 1 hour if summer time (DST) is active
+  const adjustPrayerTime = (timeStr: string) => {
+    if (!isSummerTime || !timeStr || timeStr === "--:--" || timeStr.includes("unknown")) return timeStr;
+    const [h, m] = timeStr.split(":").map(Number);
+    const adjustedH = (h + 1) % 24;
+    return `${adjustedH.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  };
+
   const [newHabitName, setNewHabitName] = useState("");
   const [prayers, setPrayers] = useState<{ arabicName: string; time: string }[]>([]);
 
@@ -478,12 +490,34 @@ export default function App() {
               <div style={dashboardColumnStyle}>
                 {/* Prayer Times Banner */}
                 <div style={prayerTimesBannerStyle}>
-                  <h4 style={prayerBannerTitleStyle}>مواقيت الصلاة</h4>
+                  
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <h4 style={{ ...prayerBannerTitleStyle, margin: 0 }}>مواقيت الصلاة</h4>
+                    <button
+                      onClick={() => setIsSummerTime(!isSummerTime)}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.18)",
+                        border: "none",
+                        borderRadius: "12px",
+                        padding: "4px 10px",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "800",
+                        cursor: "pointer",
+                        outline: "none",
+                        transition: "all 0.2s ease"
+                      }}
+                      title="اضغط للتحويل بين التوقيت الصيفي والشتوي"
+                    >
+                      {isSummerTime ? "☀️ التوقيت الصيفي" : "❄️ التوقيت الشتوي"}
+                    </button>
+                  </div>
+
                   <div style={prayerBannerTimesGridStyle}>
                     {prayers.length > 0 ? (
                       prayers.map((p, idx) => (
                         <div key={idx} style={prayerBannerColStyle}>
-                          <span style={prayerValueStyle}>{p.time}</span>
+                          <span style={prayerValueStyle}>{adjustPrayerTime(p.time)}</span>
                           <span style={prayerLabelStyle}>{p.arabicName}</span>
                         </div>
                       ))
@@ -600,7 +634,33 @@ export default function App() {
               {/* Right Column: Habit Tracker Calendar Grid */}
               <div style={dashboardColumnStyle}>
                 <div style={habitTrackerHeaderStyle}>
-                  <h3 style={columnTitleStyle}>متابع العادات</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {isEditingTitle ? (
+                      <input
+                        type="text"
+                        value={challengeTitle}
+                        onChange={(e) => setChallengeTitle(e.target.value)}
+                        onBlur={() => setIsEditingTitle(false)}
+                        onKeyDown={(e) => { if (e.key === "Enter") setIsEditingTitle(false); }}
+                        autoFocus
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          border: "1px solid var(--gold)",
+                          borderRadius: "8px",
+                          padding: "4px 8px",
+                          backgroundColor: "var(--bg-primary)",
+                          color: "var(--text-main)",
+                          outline: "none"
+                        }}
+                      />
+                    ) : (
+                      <span onClick={() => setIsEditingTitle(true)} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }} title="اضغط لتعديل عنوان التحدي">
+                        <h3 style={{ ...columnTitleStyle, borderBottom: "1px dashed var(--gold)", paddingBottom: "2px" }}>{challengeTitle}</h3>
+                        <span style={{ fontSize: "12px" }}>✏️</span>
+                      </span>
+                    )}
+                  </div>
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <button style={monthArrowBtnStyle}>{"<"}</button>
                     <span style={monthTitleStyle}>يونيو</span>
