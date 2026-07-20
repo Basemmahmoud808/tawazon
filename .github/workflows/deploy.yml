@@ -1,27 +1,28 @@
-name: Deploy to Firebase Hosting
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
-  build-and-deploy:
+  deploy:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install and Build 🔧
+      - name: Install and Build
         run: |
-          npm ci
+          npm install
           npm run build
 
-      - name: Deploy to Firebase Hosting 🚀
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TAWAZAN }}
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-          channelId: live
+          folder: dist
+          branch: gh-pages
