@@ -153,22 +153,8 @@ export default function App() {
 
   const currentDayIndex = getChallengeDayIndex();
 
-  const getChallengePhaseAndDay = () => {
-    if (currentDayIndex < 30) {
-      return { phase: "المرحلة الأولى", day: currentDayIndex + 1 };
-    } else if (currentDayIndex < 60) {
-      return { phase: "المرحلة الثانية", day: currentDayIndex - 30 + 1 };
-    } else if (currentDayIndex < 90) {
-      return { phase: "المرحلة الثالثة", day: currentDayIndex - 60 + 1 };
-    } else {
-      return { phase: "مكتمل 🎉", day: 90 };
-    }
-  };
-
-  const { phase: challengePhase, day: challengeDay } = getChallengePhaseAndDay();
-
   const handleResetChallenge = () => {
-    if (window.confirm("هل أنت متأكد من رغبتك في إعادة بدء تحدي الـ 90 يوماً من اليوم وتصفير التقدم؟")) {
+    if (window.confirm("هل أنت متأكد من رغبتك في إعادة بدء التحدي من اليوم وتصفير التقدم؟")) {
       setChallengeStartDate(new Date().toISOString());
       setDaysCompleted(Array(30).fill(false));
     }
@@ -176,17 +162,16 @@ export default function App() {
 
   // Auto-complete day in grid if all daily habits are checked off
   useEffect(() => {
-    const todayNum = new Date().getDate() - 1;
     if (totalCount > 0 && completedCount === totalCount) {
-      if (todayNum >= 0 && todayNum < 30) {
+      if (currentDayIndex >= 0 && currentDayIndex < 30) {
         setDaysCompleted((prev) => {
           const next = [...prev];
-          next[todayNum] = true;
+          next[currentDayIndex] = true;
           return next;
         });
       }
     }
-  }, [completedCount, totalCount]);
+  }, [completedCount, totalCount, currentDayIndex]);
 
   // Helper to show native Web Notification
   const showLocalNotification = (title: string, body: string) => {
@@ -706,8 +691,8 @@ export default function App() {
                   
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <span style={{ ...monthTitleStyle, color: "var(--gold)" }}>
-                      {currentDayIndex >= 0 && currentDayIndex < 90 
-                        ? `${challengePhase} (اليوم ${challengeDay} من 30)` 
+                      {currentDayIndex >= 0 && currentDayIndex < 30 
+                        ? `اليوم ${currentDayIndex + 1} من 30` 
                         : "مكتمل 🎉"}
                     </span>
                     <button
@@ -721,7 +706,7 @@ export default function App() {
                         color: "var(--text-muted)",
                         transition: "color 0.2s ease"
                       }}
-                      title="إعادة بدء تحدي الـ 90 يوماً من اليوم"
+                      title="إعادة بدء التحدي من اليوم"
                     >
                       🔄
                     </button>
