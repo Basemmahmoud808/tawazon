@@ -137,9 +137,27 @@ export default function App() {
     new Date().toISOString()
   );
   const [daysCompleted, setDaysCompleted] = useLocalStorage<boolean[]>(
-    "tawazon_30day_completion_v5",
-    Array(30).fill(false)
+    "tawazon_90day_completion_v6",
+    Array(90).fill(false)
   );
+
+  const getInitialPhase = (dayIdx: number) => {
+    if (dayIdx < 30) return 1;
+    if (dayIdx < 60) return 2;
+    return 3;
+  };
+
+  const initialDayIndex = (() => {
+    const start = new Date(challengeStartDate);
+    start.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - start.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  })();
+
+  const [activePhase, setActivePhase] = useState<number>(getInitialPhase(initialDayIndex));
+
 
   const getChallengeDayIndex = () => {
     const start = new Date(challengeStartDate);
@@ -156,14 +174,14 @@ export default function App() {
   const handleResetChallenge = () => {
     if (window.confirm("هل أنت متأكد من رغبتك في إعادة بدء التحدي من اليوم وتصفير التقدم؟")) {
       setChallengeStartDate(new Date().toISOString());
-      setDaysCompleted(Array(30).fill(false));
+      setDaysCompleted(Array(90).fill(false));
     }
   };
 
   // Auto-complete day in grid if all daily habits are checked off
   useEffect(() => {
     if (totalCount > 0 && completedCount === totalCount) {
-      if (currentDayIndex >= 0 && currentDayIndex < 30) {
+      if (currentDayIndex >= 0 && currentDayIndex < 90) {
         setDaysCompleted((prev) => {
           const next = [...prev];
           next[currentDayIndex] = true;
@@ -172,14 +190,6 @@ export default function App() {
       }
     }
   }, [completedCount, totalCount, currentDayIndex]);
-
-  // Automatic challenge rollover: once 30 days are reached, automatically start a new 30-day cycle
-  useEffect(() => {
-    if (currentDayIndex >= 30) {
-      setChallengeStartDate(new Date().toISOString());
-      setDaysCompleted(Array(30).fill(false));
-    }
-  }, [currentDayIndex, setChallengeStartDate, setDaysCompleted]);
 
   // Helper to show native Web Notification
   const showLocalNotification = (title: string, body: string) => {
@@ -698,11 +708,29 @@ export default function App() {
                   </div>
                   
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    {/* Phase Navigation arrows */}
+                    <button
+                      onClick={() => setActivePhase(p => Math.max(1, p - 1))}
+                      disabled={activePhase === 1}
+                      style={{ background: "none", border: "none", color: activePhase === 1 ? "var(--text-muted)" : "var(--gold)", cursor: activePhase === 1 ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "bold" }}
+                      title="المرحلة السابقة"
+                    >
+                      {"<"}
+                    </button>
+                    
                     <span style={{ ...monthTitleStyle, color: "var(--gold)" }}>
-                      {currentDayIndex >= 0 && currentDayIndex < 30 
-                        ? `اليوم ${currentDayIndex + 1} من 30` 
-                        : "مكتمل 🎉"}
+                      المرحلة {activePhase} (اليوم {currentDayIndex >= 0 && currentDayIndex < 90 ? currentDayIndex + 1 : 90} من 90)
                     </span>
+
+                    <button
+                      onClick={() => setActivePhase(p => Math.min(3, p + 1))}
+                      disabled={activePhase === 3}
+                      style={{ background: "none", border: "none", color: activePhase === 3 ? "var(--text-muted)" : "var(--gold)", cursor: activePhase === 3 ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "bold" }}
+                      title="المرحلة التالية"
+                    >
+                      {">"}
+                    </button>
+
                     <button
                       onClick={handleResetChallenge}
                       style={{
@@ -722,18 +750,21 @@ export default function App() {
 
                 </div>
 
-                {/* 30 Days Grid (6 Columns) */}
+                {/* 30 Days Grid (6 Columns) mapped to global 90 days Array */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px", margin: "12px 0" }}>
-                  {daysCompleted.map((isDone, idx) => {
-                    const dayNum = idx + 1;
-                    const isToday = idx === (new Date().getDate() - 1);
+                  {Array.from({ length: 30 }).map((_, idx) => {
+                    const localDayNum = idx + 1;
+                    const globalIdx = (activePhase - 1) * 30 + idx;
+                    const isDone = daysCompleted[globalIdx];
+                    const isToday = globalIdx === currentDayIndex;
+
                     return (
                       <div
                         key={idx}
                         onClick={() => {
                           setDaysCompleted(prev => {
                             const next = [...prev];
-                            next[idx] = !next[idx];
+                            next[globalIdx] = !next[globalIdx];
                             return next;
                           });
                         }}
@@ -746,9 +777,9 @@ export default function App() {
                           fontWeight: isToday ? "bold" : "normal",
                           boxShadow: isToday ? "0 0 10px rgba(194, 144, 40, 0.25)" : "none",
                         }}
-                        title={`اليوم ${dayNum}`}
+                        title={`اليوم ${globalIdx + 1}`}
                       >
-                        {dayNum}
+                        {localDayNum}
                       </div>
                     );
                   })}
@@ -756,12 +787,12 @@ export default function App() {
 
                 <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: "bold" }}>
-                    معدل الإلتزام: {Math.round((daysCompleted.filter(Boolean).length / 30) * 100)}%
+                    معدل الإلتزام: {Math.round((daysCompleted.filter(Boolean).length / 90) * 100)}%
                   </span>
                   <button
                     onClick={() => {
-                      if (window.confirm("هل ترغب في تصفير تقدم هذا الشهر؟")) {
-                        setDaysCompleted(Array(30).fill(false));
+                      if (window.confirm("هل ترغب في تصفير تقدم التحدي بالكامل؟")) {
+                        setDaysCompleted(Array(90).fill(false));
                       }
                     }}
                     style={cardFooterBtnStyle}
