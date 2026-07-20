@@ -137,8 +137,8 @@ export default function App() {
     new Date().toISOString()
   );
   const [daysCompleted, setDaysCompleted] = useLocalStorage<boolean[]>(
-    "tawazon_90day_completion_v3",
-    Array(90).fill(false)
+    "tawazon_30day_completion_v4",
+    Array(30).fill(false)
   );
 
   const getChallengeDayIndex = () => {
@@ -162,16 +162,17 @@ export default function App() {
 
   // Auto-complete day in grid if all daily habits are checked off
   useEffect(() => {
+    const todayNum = new Date().getDate() - 1;
     if (totalCount > 0 && completedCount === totalCount) {
-      if (currentDayIndex >= 0 && currentDayIndex < 90) {
+      if (todayNum >= 0 && todayNum < 30) {
         setDaysCompleted((prev) => {
           const next = [...prev];
-          next[currentDayIndex] = true;
+          next[todayNum] = true;
           return next;
         });
       }
     }
-  }, [completedCount, totalCount, currentDayIndex]);
+  }, [completedCount, totalCount]);
 
   // Helper to show native Web Notification
   const showLocalNotification = (title: string, body: string) => {
@@ -562,7 +563,7 @@ export default function App() {
 
                 {/* Habit Checklist (مفردات العادية) */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
-                  <h4 style={checklistTitleStyle}>مفردات العادية</h4>
+                  <h4 style={checklistTitleStyle}>المهام اليومية</h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {habits.map((habit) => (
                       <div
@@ -695,15 +696,30 @@ export default function App() {
                         ? `اليوم ${currentDayIndex + 1} من 90` 
                         : "مكتمل 🎉"}
                     </span>
+                    <button
+                      onClick={handleResetChallenge}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        padding: "2px 4px",
+                        color: "var(--text-muted)",
+                        transition: "color 0.2s ease"
+                      }}
+                      title="إعادة بدء تحدي الـ 90 يوماً من اليوم"
+                    >
+                      🔄
+                    </button>
                   </div>
 
                 </div>
 
-                {/* 90 Days Grid (10 Columns) */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "6px", margin: "12px 0" }}>
+                {/* 30 Days Grid (6 Columns) */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px", margin: "12px 0" }}>
                   {daysCompleted.map((isDone, idx) => {
                     const dayNum = idx + 1;
-                    const isToday = idx === currentDayIndex;
+                    const isToday = idx === (new Date().getDate() - 1);
                     return (
                       <div
                         key={idx}
@@ -716,12 +732,12 @@ export default function App() {
                         }}
                         style={{
                           ...calendarDayCircleStyle,
-                          fontSize: "9px",
+                          fontSize: "13px",
                           backgroundColor: isDone ? "var(--brand)" : "transparent",
                           borderColor: isDone ? "var(--brand)" : isToday ? "var(--gold)" : "var(--bg-accent)",
                           color: isDone ? "white" : "var(--text-muted)",
                           fontWeight: isToday ? "bold" : "normal",
-                          boxShadow: isToday ? "0 0 8px rgba(194, 144, 40, 0.25)" : "none",
+                          boxShadow: isToday ? "0 0 10px rgba(194, 144, 40, 0.25)" : "none",
                         }}
                         title={`اليوم ${dayNum}`}
                       >
@@ -733,9 +749,18 @@ export default function App() {
 
                 <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: "bold" }}>
-                    معدل الإلتزام: {Math.round((daysCompleted.filter(Boolean).length / 90) * 100)}%
+                    معدل الإلتزام: {Math.round((daysCompleted.filter(Boolean).length / 30) * 100)}%
                   </span>
-                  <button onClick={handleResetChallenge} style={cardFooterBtnStyle}>إعادة بدء التحدي 🔄</button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm("هل ترغب في تصفير تقدم هذا الشهر؟")) {
+                        setDaysCompleted(Array(30).fill(false));
+                      }
+                    }}
+                    style={cardFooterBtnStyle}
+                  >
+                    إعادة تعيين التقويم 🔄
+                  </button>
                 </div>
               </div>
             </div>
@@ -785,51 +810,34 @@ export default function App() {
 
       {/* ─── Footer ─── */}
       <footer style={footerStyle}>
-        <div style={footerContactRow}>
-          <h4 style={footerBrandName}>منصة توازن</h4>
-        </div>
-        
-        {/* Contact info links */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "16px", margin: "10px 0 16px", flexWrap: "wrap" }}>
-          <a
-            href="https://wa.me/201092610252"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "12px",
-              fontWeight: "bold",
-              color: "var(--brand)",
-              textDecoration: "none",
-              padding: "6px 14px",
-              borderRadius: "20px",
-              border: "1px solid rgba(17,91,61,0.15)",
-              backgroundColor: "var(--brand-light)"
-            }}
-          >
-            <span>💬 واتساب: 01092610252</span>
-          </a>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+          <h4 style={{ ...footerBrandName, margin: 0 }}>منصة توازن</h4>
+          
+          {/* Centered Professional Contacts without raw labels */}
+          <div style={{ display: "flex", gap: "14px", justifyContent: "center" }}>
+            <a
+              href="https://wa.me/201092610252"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={footerContactIconStyle}
+              title="واتساب"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+            </a>
 
-          <a
-            href="mailto:basemmahmoud545@gmail.com"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "12px",
-              fontWeight: "bold",
-              color: "var(--gold)",
-              textDecoration: "none",
-              padding: "6px 14px",
-              borderRadius: "20px",
-              border: "1px solid rgba(194,144,40,0.15)",
-              backgroundColor: "rgba(194,144,40,0.05)"
-            }}
-          >
-            <span>✉️ البريد: basemmahmoud545@gmail.com</span>
-          </a>
+            <a
+              href="mailto:basemmahmoud545@gmail.com"
+              style={footerContactIconStyle}
+              title="البريد الإلكتروني"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </a>
+          </div>
         </div>
 
         <p style={footerCredit}>🌿 جميع الحقوق محفوظة لـ توازن © {new Date().getFullYear()}</p>
@@ -1057,13 +1065,28 @@ const footerBrandName: React.CSSProperties = {
   color: "var(--text-main)",
 };
 
-const footerContactRow: React.CSSProperties = {
+/* const footerContactRow: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   flexWrap: "wrap",
   gap: "12px",
   marginBottom: "12px",
+}; */
+
+const footerContactIconStyle: React.CSSProperties = {
+  width: "36px",
+  height: "36px",
+  borderRadius: "50%",
+  border: "1.5px solid var(--bg-accent)",
+  backgroundColor: "var(--bg-card)",
+  color: "var(--brand)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  outline: "none",
 };
 
 const footerCredit: React.CSSProperties = {
