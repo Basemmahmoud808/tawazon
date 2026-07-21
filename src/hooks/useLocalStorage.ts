@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 // first layer of privacy for a client-side personal wellness app.
 const OBFUSCATION_SEED = "twzn_2024_secure_key_#@!";
 
-function obfuscate(data: string): string {
+export function obfuscate(data: string): string {
   let result = "";
   for (let i = 0; i < data.length; i++) {
     result += String.fromCharCode(
@@ -16,7 +16,7 @@ function obfuscate(data: string): string {
   return btoa(unescape(encodeURIComponent(result)));
 }
 
-function deobfuscate(encoded: string): string {
+export function deobfuscate(encoded: string): string {
   try {
     const data = decodeURIComponent(escape(atob(encoded)));
     let result = "";

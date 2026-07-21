@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useEffect } from "react";
-import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useLocalStorage, obfuscate, deobfuscate } from "./hooks/useLocalStorage";
 import { useAdminGuard } from "./hooks/useAdminGuard";
 import type { Habit } from "./components/HabitTracker";
 import { Login } from "./components/Login";
@@ -15,7 +15,7 @@ const HistoryArchive = lazy(() => import("./components/HistoryArchive").then((mo
 
 // Firebase imports
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 const DEFAULT_HABITS: Habit[] = [
@@ -47,7 +47,7 @@ const MOCK_DAILY_LOGS: DailyLog[] = [
 
 export default function App() {
   const [isSummerTime, setIsSummerTime] = useLocalStorage<boolean>("tawazon_use_summer_time", true);
-  const [challengeTitle, setChallengeTitle] = useLocalStorage<string>("tawazon_90day_challenge_title", "التزام بالرياضة والقراءة اليومية");
+  const [challengeTitle, setChallengeTitle] = useState<string>("التزام بالرياضة والقراءة اليومية");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   // Shift timing by 1 hour if summer time (DST) is active
@@ -116,8 +116,14 @@ export default function App() {
     setNewHabitName("");
   };
 
-  const [habits, setHabits] = useLocalStorage<Habit[]>("tawazon_habits", DEFAULT_HABITS);
-  const [activeTab, setActiveTab] = useState<"home" | "archive" | "prayer" | "athkar" | "wird" | "admin">("home");
+  const [userId, setUserId] = useState<string>(() => {
+    return localStorage.getItem("tawazon_current_uid") || "guest";
+  });
+  const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
+  const [challengeStartDate, setChallengeStartDate] = useState<string>(new Date().toISOString());
+  const [daysCompleted, setDaysCompleted] = useState<boolean[]>(Array(90).fill(false));
+
+  const [activeTab, setActiveTab] = useState<"home" | "archive" | "prayer" | "athkar" | "wird" | "admin" >("home");
   const isAdmin = useAdminGuard();
   const [lastResetDate, setLastResetDate] = useLocalStorage<string>("tawazon_last_reset", "");
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("tawazon_notifications_enabled", false);
@@ -131,15 +137,138 @@ export default function App() {
   const completedCount = habits.filter((h) => h.completed).length;
   const totalCount = habits.length;
 
-  // 90 Days Challenge tracker synced to start date
-  const [challengeStartDate, setChallengeStartDate] = useLocalStorage<string>(
-    "tawazon_90day_start_date",
-    new Date().toISOString()
-  );
-  const [daysCompleted, setDaysCompleted] = useLocalStorage<boolean[]>(
-    "tawazon_90day_completion_v6",
-    Array(90).fill(false)
-  );
+  // Load user data dynamically whenever userId changes
+  useEffect(() => {
+    if (!userId) return;
+    const habitsKey = `tawazon_${userId}_habits`;
+    const daysKey = `tawazon_${userId}_90day_completion_v6`;
+    const startKey = `tawazon_${userId}_90day_start_date`;
+    const titleKey = `tawazon_${userId}_90day_challenge_title`;
+
+    // 1. Load from scoped LocalStorage (offline-first)
+    let loadedHabits = DEFAULT_HABITS;
+    let loadedDays = Array(90).fill(false);
+    let loadedStart = new Date().toISOString();
+    let loadedTitle = "التزام بالرياضة والقراءة اليومية";
+
+    try {
+      const rawHabits = localStorage.getItem(habitsKey);
+      if (rawHabits) loadedHabits = JSON.parse(deobfuscate(rawHabits));
+      
+      const rawDays = localStorage.getItem(daysKey);
+      if (rawDays) loadedDays = JSON.parse(deobfuscate(rawDays));
+
+      const rawStart = localStorage.getItem(startKey);
+      if (rawStart) loadedStart = JSON.parse(deobfuscate(rawStart));
+
+      const rawTitle = localStorage.getItem(titleKey);
+      if (rawTitle) loadedTitle = JSON.parse(deobfuscate(rawTitle));
+    } catch {
+      try {
+        const rawHabits = localStorage.getItem(habitsKey);
+        if (rawHabits) loadedHabits = JSON.parse(rawHabits);
+        
+        const rawDays = localStorage.getItem(daysKey);
+        if (rawDays) loadedDays = JSON.parse(rawDays);
+      } catch {}
+    }
+
+    setHabits(loadedHabits);
+    setDaysCompleted(loadedDays);
+    setChallengeStartDate(loadedStart);
+    setChallengeTitle(loadedTitle);
+
+    // 2. Fetch from Firestore if logged in and configured (online sync)
+    if (userId !== "guest" && db) {
+      const docRef = doc(db, "users", userId);
+      getDoc(docRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.habits) setHabits(data.habits);
+          if (data.daysCompleted) setDaysCompleted(data.daysCompleted);
+          if (data.challengeStartDate) setChallengeStartDate(data.challengeStartDate);
+          if (data.challengeTitle) setChallengeTitle(data.challengeTitle);
+
+          // Update local storage so it remains in sync offline
+          try {
+            if (data.habits) localStorage.setItem(habitsKey, obfuscate(JSON.stringify(data.habits)));
+            if (data.daysCompleted) localStorage.setItem(daysKey, obfuscate(JSON.stringify(data.daysCompleted)));
+            if (data.challengeStartDate) localStorage.setItem(startKey, obfuscate(JSON.stringify(data.challengeStartDate)));
+            if (data.challengeTitle) localStorage.setItem(titleKey, obfuscate(JSON.stringify(data.challengeTitle)));
+          } catch {}
+        } else {
+          // Upload local progress on first registration
+          setDoc(docRef, {
+            habits: loadedHabits,
+            daysCompleted: loadedDays,
+            challengeStartDate: loadedStart,
+            challengeTitle: loadedTitle,
+            updatedAt: Date.now()
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+  }, [userId]);
+
+  // Sync state changes to LocalStorage and Firestore
+  const [initialLoaded, setInitialLoaded] = useState(false);
+  useEffect(() => {
+    // Wait for initial load to finish to avoid overwriting state
+    const timer = setTimeout(() => setInitialLoaded(true), 1200);
+    return () => clearTimeout(timer);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || !initialLoaded) return;
+    const habitsKey = `tawazon_${userId}_habits`;
+    try {
+      localStorage.setItem(habitsKey, obfuscate(JSON.stringify(habits)));
+    } catch {}
+
+    if (userId !== "guest" && db) {
+      const docRef = doc(db, "users", userId);
+      setDoc(docRef, { habits, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+    }
+  }, [habits, userId, initialLoaded]);
+
+  useEffect(() => {
+    if (!userId || !initialLoaded) return;
+    const daysKey = `tawazon_${userId}_90day_completion_v6`;
+    try {
+      localStorage.setItem(daysKey, obfuscate(JSON.stringify(daysCompleted)));
+    } catch {}
+
+    if (userId !== "guest" && db) {
+      const docRef = doc(db, "users", userId);
+      setDoc(docRef, { daysCompleted, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+    }
+  }, [daysCompleted, userId, initialLoaded]);
+
+  useEffect(() => {
+    if (!userId || !initialLoaded) return;
+    const startKey = `tawazon_${userId}_90day_start_date`;
+    try {
+      localStorage.setItem(startKey, obfuscate(JSON.stringify(challengeStartDate)));
+    } catch {}
+
+    if (userId !== "guest" && db) {
+      const docRef = doc(db, "users", userId);
+      setDoc(docRef, { challengeStartDate, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+    }
+  }, [challengeStartDate, userId, initialLoaded]);
+
+  useEffect(() => {
+    if (!userId || !initialLoaded) return;
+    const titleKey = `tawazon_${userId}_90day_challenge_title`;
+    try {
+      localStorage.setItem(titleKey, obfuscate(JSON.stringify(challengeTitle)));
+    } catch {}
+
+    if (userId !== "guest" && db) {
+      const docRef = doc(db, "users", userId);
+      setDoc(docRef, { challengeTitle, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+    }
+  }, [challengeTitle, userId, initialLoaded]);
 
   /* const getInitialPhase = (dayIdx: number) => {
     if (dayIdx < 30) return 1;
@@ -300,6 +429,11 @@ export default function App() {
         const name = firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "مستخدم توازن";
         setUserName(name);
         setIsLoggedIn(true);
+        setUserId(firebaseUser.uid);
+        localStorage.setItem("tawazon_current_uid", firebaseUser.uid);
+      } else {
+        setUserId("guest");
+        localStorage.setItem("tawazon_current_uid", "guest");
       }
     });
     return () => unsubscribe();
@@ -345,6 +479,10 @@ export default function App() {
   const handleLoginSuccess = (name: string, method: string) => {
     setUserName(name);
     setIsLoggedIn(true);
+    if (auth?.currentUser) {
+      setUserId(auth.currentUser.uid);
+      localStorage.setItem("tawazon_current_uid", auth.currentUser.uid);
+    }
     logUserActivity(name, method);
   };
 
@@ -358,6 +496,8 @@ export default function App() {
       } catch { /* silent */ }
       setIsLoggedIn(false);
       setUserName("");
+      setUserId("guest");
+      localStorage.setItem("tawazon_current_uid", "guest");
       if (activeTab === "admin") setActiveTab("home");
     }
   };
