@@ -317,6 +317,7 @@ export default function App() {
       return true;
     }
   });
+  const [onboardingStep, setOnboardingStep] = useState<number>(1);
 
   const handleDismissDua = () => {
     setShowDuaModal(false);
@@ -623,18 +624,84 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Welcome Dua Modal */}
+      {/* Welcome & Onboarding Modal */}
       {showDuaModal && (
         <div style={modalOverlayStyle}>
-          <div style={duaModalContentStyle}>
-            <span style={{ fontSize: "42px", marginBottom: "16px" }}>🤲</span>
-            <h3 style={{ margin: "0 0 12px", color: "var(--brand)", fontSize: "19px", fontWeight: "900", fontFamily: "Thmanyah Serif Display, serif" }}>دعاء من القلب</h3>
-            <p style={{ margin: "0 0 24px", fontSize: "14px", lineHeight: "1.8", color: "var(--text-main)", fontWeight: "800", textAlign: "center" }}>
-              الرجاء الدعاء لصاحب هذا الموقع بالخير والرزق والبركة
-            </p>
-            <button onClick={handleDismissDua} style={duaModalBtnStyle} onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"} onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}>
-              اللهم آمين ✨
-            </button>
+          <div style={{ ...duaModalContentStyle, maxWidth: "460px", padding: "28px 24px" }}>
+            
+            {onboardingStep === 1 && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                <span style={{ fontSize: "46px", marginBottom: "12px", animation: "floatLeaf 3s infinite ease-in-out" }} className="leaf-animation">🌿</span>
+                <h3 style={{ margin: "0 0 12px", color: "var(--brand)", fontSize: "20px", fontWeight: "900", fontFamily: "Thmanyah Serif Display, serif" }}>
+                  مرحباً بك في توازن
+                </h3>
+                <p style={{ margin: "0 0 20px", fontSize: "13px", lineHeight: "1.8", color: "var(--text-main)", textAlign: "center" }}>
+                  مساحتك الشخصية للارتقاء الروحي والذاتي. يهدف تطبيق <strong>توازن</strong> إلى مساعدتك في العثور على السكينة اليومية والتوازن من خلال تنظيم عباداتك وبناء عادات تدوم طويلاً.
+                </p>
+                <button 
+                  onClick={() => setOnboardingStep(2)} 
+                  style={duaModalBtnStyle}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"} 
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                >
+                  تعرّف على الميزات ➔
+                </button>
+              </div>
+            )}
+
+            {onboardingStep === 2 && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", textAlign: "right" }}>
+                <span style={{ fontSize: "40px", marginBottom: "12px" }}>✨</span>
+                <h3 style={{ margin: "0 auto 12px", color: "var(--brand)", fontSize: "19px", fontWeight: "900", fontFamily: "Thmanyah Serif Display, serif", textAlign: "center" }}>
+                  ميزات المنصة الذكية
+                </h3>
+                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "10px", margin: "0 0 20px 0", fontSize: "12.5px", color: "var(--text-main)", lineHeight: "1.6" }}>
+                  <p>🕌 <strong>مواقيت الصلاة:</strong> تتبع الفروض بدقة مع دعم كامل لخيارات التوقيت الصيفي.</p>
+                  <p>📖 <strong>الورد القرآني:</strong> تصفح وقراءة مصحف مجمع الملك فهد بالصفحات الحقيقية للمتابعة اليومية.</p>
+                  <p>📿 <strong>الأذكار والعدادات:</strong> قراءة أذكار الصباح والمساء واليوم الليلة مع عداد ذكي تفاعلي.</p>
+                  <p>📅 <strong>تحدي الـ 90 يوماً:</strong> تقويم متكامل لبناء العادات ومتابعة التزامك اليومي بمرونة بالغة.</p>
+                </div>
+                <button 
+                  onClick={() => setOnboardingStep(3)} 
+                  style={duaModalBtnStyle}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"} 
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                >
+                  الخطوة التالية ➔
+                </button>
+              </div>
+            )}
+
+            {onboardingStep === 3 && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                <span style={{ fontSize: "46px", marginBottom: "12px" }}>🤲</span>
+                <h3 style={{ margin: "0 0 12px", color: "var(--brand)", fontSize: "19px", fontWeight: "900", fontFamily: "Thmanyah Serif Display, serif" }}>
+                  دعاء من القلب
+                </h3>
+                <p style={{ margin: "0 0 20px", fontSize: "13px", lineHeight: "1.8", color: "var(--text-main)", fontWeight: "800", textAlign: "center" }}>
+                  نرجو منك التكرم بالدعاء بالخير والرزق الحلال والبركة والتوفيق لصاحب هذا الموقع وعائلته.
+                </p>
+                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "16px", textAlign: "center" }}>
+                  💡 يمكنك التواصل مع المطور وإرسال اقتراحات تعديل الألوان أو الميزات بالضغط على أيقونة الرسالة بالواجهة.
+                </div>
+                <button 
+                  onClick={handleDismissDua} 
+                  style={duaModalBtnStyle}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"} 
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                >
+                  اللهم آمين، دعنا نبدأ! ✨
+                </button>
+              </div>
+            )}
+
+            {/* Step Indicators */}
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: "16px" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: onboardingStep === 1 ? "var(--brand)" : "var(--bg-accent)", transition: "all 0.2s" }} />
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: onboardingStep === 2 ? "var(--brand)" : "var(--bg-accent)", transition: "all 0.2s" }} />
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: onboardingStep === 3 ? "var(--brand)" : "var(--bg-accent)", transition: "all 0.2s" }} />
+            </div>
+
           </div>
         </div>
       )}
