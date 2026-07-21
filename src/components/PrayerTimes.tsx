@@ -244,10 +244,10 @@ export const PrayerTimes: React.FC = () => {
   };
 
   return (
-    <div style={container}>
+    <div className="prayer-container">
       {/* Header Panel */}
-      <div style={headerBox}>
-        <div style={headerTop}>
+      <div className="prayer-header-box">
+        <div className="prayer-header-top">
           <div>
             <h3 style={headerTitle}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block" }}>
@@ -263,7 +263,7 @@ export const PrayerTimes: React.FC = () => {
             {hijriDate && <p style={hijriStyle}>{hijriDate}</p>}
           </div>
           {nextPrayer && (
-            <div style={nextPrayerBox}>
+            <div className="next-prayer-box">
               <p style={nextLabel}>الصلاة القادمة</p>
               <p style={nextName}>{nextPrayer.name}</p>
               <p style={nextTimer}>بعد {formatCountdown(nextPrayer.minsLeft)}</p>
@@ -279,10 +279,10 @@ export const PrayerTimes: React.FC = () => {
       </div>
 
       {/* Grid: 2 Columns on desktop (Prayer List | Qibla Compass) */}
-      <div style={contentGrid}>
+      <div className="prayer-content-grid">
         
         {/* Column 1: Prayers list */}
-        <div style={columnCard}>
+        <div className="prayer-column-card">
           <h4 style={panelTitle}>قائمة الفروض اليومية</h4>
           {loading ? (
             <div style={loadBox}>
@@ -351,10 +351,10 @@ export const PrayerTimes: React.FC = () => {
         </div>
 
         {/* Column 2: Compass & Sound Settings */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1 }}>
+        <div className="prayer-column-side">
           
           {/* Compass Card */}
-          <div style={columnCard}>
+          <div className="prayer-column-card">
             <h4 style={panelTitle}>مؤشر اتجاه القبلة</h4>
             <div style={compassContainer}>
               
@@ -409,7 +409,7 @@ export const PrayerTimes: React.FC = () => {
           </div>
 
           {/* Sound settings card */}
-          <div style={columnCard}>
+          <div className="prayer-column-card">
             <h4 style={panelTitle}>إعدادات أصوات تنبيه الصلاة</h4>
             
             {/* Audio Toggle switch */}
@@ -554,24 +554,6 @@ const renderPrayerIcon = (name: string, isCurrent: boolean) => {
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const container: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "16px" };
-
-const headerBox: React.CSSProperties = {
-  background: "linear-gradient(to bottom, #112d42 0%, #1a3a5c 100%)",
-  borderRadius: "16px",
-  padding: "20px",
-  color: "white",
-  boxShadow: "0 4px 15px rgba(17,45,66,0.15)",
-};
-
-const headerTop: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  marginBottom: "16px",
-  flexWrap: "wrap",
-  gap: "12px",
-};
 
 const headerTitle: React.CSSProperties = {
   margin: "0 0 4px",
@@ -585,13 +567,6 @@ const headerTitle: React.CSSProperties = {
 
 const hijriStyle: React.CSSProperties = { margin: 0, fontSize: "12px", color: "rgba(255,255,255,0.7)" };
 
-const nextPrayerBox: React.CSSProperties = {
-  backgroundColor: "rgba(255,255,255,0.12)",
-  borderRadius: "10px",
-  padding: "8px 14px",
-  textAlign: "center",
-  backdropFilter: "blur(4px)",
-};
 
 const nextLabel: React.CSSProperties = { margin: 0, fontSize: "9px", color: "rgba(255,255,255,0.7)", fontWeight: "700" };
 const nextName: React.CSSProperties  = { margin: "2px 0", fontSize: "15px", fontWeight: "800", color: "white" };
@@ -614,24 +589,6 @@ const progressBarInner: React.CSSProperties = {
 
 const progressText: React.CSSProperties = { margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.8)", fontWeight: "600" };
 
-const contentGrid: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "row",
-  gap: "16px",
-  flexWrap: "wrap",
-};
-
-const columnCard: React.CSSProperties = {
-  flex: 1,
-  minWidth: "290px",
-  backgroundColor: "var(--bg-card)",
-  borderRadius: "16px",
-  padding: "20px",
-  border: "1px solid var(--bg-accent)",
-  boxShadow: "var(--shadow-card)",
-  display: "flex",
-  flexDirection: "column",
-};
 
 const panelTitle: React.CSSProperties = {
   margin: "0 0 14px",

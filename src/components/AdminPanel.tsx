@@ -68,6 +68,11 @@ export const AdminPanel: React.FC = () => {
 
   useEffect(() => {
     const fetchLogs = async () => {
+      if (!db) {
+        setError("لوحة الإدارة تتطلب إعداد Firebase/Firestore صحيحاً في ملف البيئة.");
+        setLoading(false);
+        return;
+      }
       try {
         const q = query(
           collection(db, "user_activity"),

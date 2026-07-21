@@ -8,6 +8,10 @@ export function useAdminGuard(): boolean {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    if (!auth) {
+      setIsAdmin(false);
+      return;
+    }
     // Reactive: re-runs whenever Firebase auth state changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAdmin(!!user && user.email === ADMIN_EMAIL);

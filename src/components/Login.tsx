@@ -23,6 +23,7 @@ interface LoginProps {
 type LoginMethod = "email" | "phone" | "google" | "facebook";
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleTheme }) => {
+  const firebaseUnavailableMessage = "تسجيل الدخول عبر Firebase غير متاح حالياً. أضف إعدادات Firebase الصحيحة في ملف البيئة ثم أعد تشغيل التطبيق.";
   const [method, setMethod] = useState<LoginMethod>("email");
   
   // Email states
@@ -72,6 +73,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
   // Complete OAuth logins after a redirect flow.
   useEffect(() => {
+    if (!auth) {
+      setErrorMsg(firebaseUnavailableMessage);
+      return;
+    }
     getRedirectResult(auth)
       .then((result) => {
         if (!result?.user) return;
@@ -116,6 +121,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    if (!auth) {
+      setErrorMsg(firebaseUnavailableMessage);
+      return;
+    }
     if (!email || !password) {
       setErrorMsg("الرجاء ملء جميع الحقول.");
       return;
@@ -146,6 +155,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
   // Setup Invisible ReCAPTCHA
   const initRecaptcha = () => {
+    if (!auth) {
+      setErrorMsg(firebaseUnavailableMessage);
+      return;
+    }
     if (!recaptchaVerifierRef.current) {
       try {
         recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", {
@@ -167,6 +180,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const handlePhoneSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    if (!auth) {
+      setErrorMsg(firebaseUnavailableMessage);
+      return;
+    }
     if (!phone || phone.length < 9) {
       setErrorMsg("الرجاء إدخال رقم هاتف صحيح.");
       return;
@@ -208,6 +225,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const handlePhoneVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    if (!auth) {
+      setErrorMsg(firebaseUnavailableMessage);
+      return;
+    }
 
     if (!otpCode || otpCode.length < 6) {
       setErrorMsg("الرجاء إدخال رمز التحقق المكون من 6 أرقام.");
@@ -235,6 +256,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
   const handleOAuthLogin = async (providerType: "google" | "facebook") => {
     setErrorMsg("");
+    if (!auth) {
+      setErrorMsg(firebaseUnavailableMessage);
+      return;
+    }
     setLoading(true);
     setLoadingMessage(providerType === "google" ? "جاري فتح بوابة تسجيل الدخول عبر Google..." : "جاري فتح بوابة تسجيل الدخول عبر Facebook...");
 

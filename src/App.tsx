@@ -292,6 +292,9 @@ export default function App() {
 
   // Real-time Firebase Authentication listener
   useEffect(() => {
+    if (!auth) {
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const name = firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "مستخدم توازن";
@@ -304,6 +307,9 @@ export default function App() {
 
   // Log user activity to Firestore
   const logUserActivity = async (name: string, method: string) => {
+    if (!auth || !db) {
+      return;
+    }
     try {
       let ip = "unknown";
       let city = "";
@@ -346,7 +352,7 @@ export default function App() {
   const handleLogout = async () => {
     if (window.confirm("هل ترغب في تسجيل الخروج من تطبيق توازن؟")) {
       try {
-        if (auth.currentUser) {
+        if (auth?.currentUser) {
           await signOut(auth);
         }
       } catch { /* silent */ }
@@ -449,85 +455,83 @@ export default function App() {
       </div>
 
       {/* Centered Navigation Capsule */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "28px" }}>
-        <nav className="nav-links">
+      <nav className="nav-links">
+        <button 
+          className={`nav-button ${activeTab === "home" ? "active" : ""}`}
+          onClick={() => setActiveTab("home")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="9" rx="1" />
+            <rect x="14" y="3" width="7" height="5" rx="1" />
+            <rect x="14" y="12" width="7" height="9" rx="1" />
+            <rect x="3" y="16" width="7" height="5" rx="1" />
+          </svg>
+          <span>الرئيسية</span>
+        </button>
+
+        <button
+          className={`nav-button ${activeTab === "prayer" ? "active" : ""}`}
+          onClick={() => setActiveTab("prayer")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2C9 5 9 9 9 14h6c0-5 0-9-3-12z" />
+            <path d="M6 21h12" />
+            <path d="M10 21v-4a2 2 0 0 1 4 0v4" />
+          </svg>
+          <span>الصلوات</span>
+        </button>
+
+        <button
+          className={`nav-button ${activeTab === "wird" ? "active" : ""}`}
+          onClick={() => setActiveTab("wird")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            <path d="M12 7v14" />
+          </svg>
+          <span>الورد <span className="mobile-hide">اليومي</span></span>
+        </button>
+
+        <button
+          className={`nav-button ${activeTab === "athkar" ? "active" : ""}`}
+          onClick={() => setActiveTab("athkar")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="8" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span>الأذكار</span>
+        </button>
+
+        <button 
+          className={`nav-button ${activeTab === "archive" ? "active" : ""}`}
+          onClick={() => setActiveTab("archive")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <span>سجل <span className="mobile-hide">الأيام</span></span>
+        </button>
+
+        {isAdmin && (
           <button 
-            className={`nav-button ${activeTab === "home" ? "active" : ""}`}
-            onClick={() => setActiveTab("home")}
+            className={`nav-button ${activeTab === "admin" ? "active" : ""}`}
+            onClick={() => setActiveTab("admin")}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="9" rx="1" />
-              <rect x="14" y="3" width="7" height="5" rx="1" />
-              <rect x="14" y="12" width="7" height="9" rx="1" />
-              <rect x="3" y="16" width="7" height="5" rx="1" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span>الرئيسية</span>
+            <span>الإدارة</span>
           </button>
-
-          <button
-            className={`nav-button ${activeTab === "prayer" ? "active" : ""}`}
-            onClick={() => setActiveTab("prayer")}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2C9 5 9 9 9 14h6c0-5 0-9-3-12z" />
-              <path d="M6 21h12" />
-              <path d="M10 21v-4a2 2 0 0 1 4 0v4" />
-            </svg>
-            <span>الصلوات</span>
-          </button>
-
-          <button
-            className={`nav-button ${activeTab === "wird" ? "active" : ""}`}
-            onClick={() => setActiveTab("wird")}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-              <path d="M12 7v14" />
-            </svg>
-            <span>الورد اليومي</span>
-          </button>
-
-          <button
-            className={`nav-button ${activeTab === "athkar" ? "active" : ""}`}
-            onClick={() => setActiveTab("athkar")}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="8" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            <span>الأذكار</span>
-          </button>
-
-          <button 
-            className={`nav-button ${activeTab === "archive" ? "active" : ""}`}
-            onClick={() => setActiveTab("archive")}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span>سجل الأيام</span>
-          </button>
-
-          {isAdmin && (
-            <button 
-              className={`nav-button ${activeTab === "admin" ? "active" : ""}`}
-              onClick={() => setActiveTab("admin")}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              <span>الإدارة</span>
-            </button>
-          )}
-        </nav>
-      </div>
+        )}
+      </nav>
 
       {/* Main Content layout */}
-      <main className="main-content" style={{ padding: "0 24px 48px" }}>
+      <main className="main-content">
         
         {/* Tab Switcher rendering */}
         {activeTab === "home" && (
@@ -574,14 +578,14 @@ export default function App() {
             </div>
 
             {/* Dashboard Inner Grid */}
-            <div style={dashboardGridInnerStyle}>
+            <div className="dashboard-grid-inner">
               {/* Left Column: Prayer Times Widget & Habit Checklist */}
               <div style={dashboardColumnStyle}>
                 {/* Prayer Times Banner */}
-                <div style={prayerTimesBannerStyle}>
+                <div className="prayer-times-banner">
                   
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                    <h4 style={{ ...prayerBannerTitleStyle, margin: 0 }}>مواقيت الصلاة</h4>
+                    <h4 style={{ ...prayerBannerTitleStyle, margin: 0, color: "white" }}>مواقيت الصلاة</h4>
                     <button
                       onClick={() => setIsSummerTime(!isSummerTime)}
                       style={{
@@ -602,21 +606,21 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div style={prayerBannerTimesGridStyle}>
+                  <div className="prayer-banner-grid">
                     {prayers.length > 0 ? (
                       prayers.map((p, idx) => (
-                        <div key={idx} style={prayerBannerColStyle}>
+                        <div key={idx} className="prayer-banner-col">
                           <span style={prayerValueStyle}>{adjustPrayerTime(p.time)}</span>
                           <span style={prayerLabelStyle}>{p.arabicName}</span>
                         </div>
                       ))
                     ) : (
                       <>
-                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الفجر</span></div>
-                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الظهر</span></div>
-                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العصر</span></div>
-                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>المغرب</span></div>
-                        <div style={prayerBannerColStyle}><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العشاء</span></div>
+                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الفجر</span></div>
+                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الظهر</span></div>
+                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العصر</span></div>
+                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>المغرب</span></div>
+                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العشاء</span></div>
                       </>
                     )}
                   </div>
@@ -683,37 +687,16 @@ export default function App() {
                     ))}
                     
                     {/* Add Custom Habit Form */}
-                    <form onSubmit={handleAddCustomHabit} style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                    <form onSubmit={handleAddCustomHabit} className="add-habit-form">
                       <input
                         type="text"
                         placeholder="إضافة مهام اليوم..."
                         value={newHabitName}
                         onChange={(e) => setNewHabitName(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: "8px 12px",
-                          borderRadius: "10px",
-                          border: "1.5px solid var(--bg-accent)",
-                          backgroundColor: "transparent",
-                          color: "var(--text-main)",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
+                        className="add-habit-input"
                       />
-                      <button
-                        type="submit"
-                        style={{
-                          background: "var(--brand)",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "10px",
-                          padding: "0 14px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                        }}
-                      >
-                        +
+                      <button type="submit" className="add-habit-btn">
+                        إضافة
                       </button>
                     </form>
                   </div>
@@ -795,7 +778,7 @@ export default function App() {
                 </div>
 
                 {/* 30 Days Grid (6 Columns) mapped to global 90 days Array */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px", margin: "12px 0" }}>
+                <div className="calendar-grid">
                   {Array.from({ length: 30 }).map((_, idx) => {
                     const localDayNum = idx + 1;
                     const globalIdx = (activePhase - 1) * 30 + idx;
@@ -891,7 +874,7 @@ export default function App() {
       </main>
 
       {/* ─── Footer ─── */}
-      <footer style={footerStyle}>
+      <footer className="footer">
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
           <h4 style={{ ...footerBrandName, margin: 0 }}>منصة توازن</h4>
           
@@ -986,11 +969,6 @@ const cardHeaderIconBtnStyle: React.CSSProperties = {
   outline: "none",
 };
 
-const dashboardGridInnerStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: "32px",
-};
 
 const dashboardColumnStyle: React.CSSProperties = {
   display: "flex",
@@ -1056,13 +1034,6 @@ const cardFooterBtnStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const prayerTimesBannerStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, var(--brand-mid), var(--brand))",
-  borderRadius: "20px",
-  padding: "20px",
-  color: "white",
-  boxShadow: "0 8px 24px rgba(17,91,61,0.18)",
-};
 
 const prayerBannerTitleStyle: React.CSSProperties = {
   fontSize: "14px",
@@ -1072,19 +1043,6 @@ const prayerBannerTitleStyle: React.CSSProperties = {
   textAlign: "right",
 };
 
-const prayerBannerTimesGridStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-};
-
-const prayerBannerColStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "6px",
-  flex: 1,
-};
 
 const prayerValueStyle: React.CSSProperties = {
   fontSize: "16px",
@@ -1138,12 +1096,6 @@ const focusedContainerStyle: React.CSSProperties = {
 };
 
 // ─── Footer Styles (minimal & clean) ────────────────────────────────────────
-const footerStyle: React.CSSProperties = {
-  borderTop: "1px solid rgba(28,108,77,0.08)",
-  padding: "24px 24px 22px",
-  marginTop: "32px",
-  textAlign: "center",
-};
 
 const footerBrandName: React.CSSProperties = {
   margin: "0 0 4px",

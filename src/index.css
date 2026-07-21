@@ -331,6 +331,8 @@ h3 { font-size: 20px; }
   max-width: 100%;
   overflow: auto;
   scrollbar-width: none;
+  margin: 0 auto 28px;
+  width: max-content;
 }
 
 .nav-links::-webkit-scrollbar {
@@ -462,7 +464,8 @@ h3 { font-size: 20px; }
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer {
   text-align: center;
-  padding: 20px 16px;
+  padding: 24px 24px 22px;
+  margin-top: 32px;
   color: var(--text-muted);
   font-size: 12px;
   border-top: 1px solid rgba(28,108,77,0.08);
@@ -505,11 +508,13 @@ tbody tr:hover td {
     bottom: 0;
     left: 0;
     right: 0;
+    width: auto;
+    margin: 0;
     background: color-mix(in srgb, var(--bg-glass) 90%, var(--brand) 10%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--bg-accent);
-    padding: 6px 4px;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -541,9 +546,13 @@ tbody tr:hover td {
   .nav-button svg { width: 20px; height: 20px; }
 
   .main-content {
-    padding-bottom: 90px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
     padding-left: var(--spacing-sm);
     padding-right: var(--spacing-sm);
+  }
+
+  .footer {
+    padding: 20px 16px calc(80px + env(safe-area-inset-bottom));
   }
 
   .card {
@@ -607,5 +616,214 @@ tbody tr:hover td {
   .login-tabs-responsive {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 6px !important;
+  }
+}
+
+/* ── Utilities ───────────────────────────────────────────────────────────── */
+.mobile-hide {
+  display: inline;
+}
+@media (max-width: 520px) {
+  .mobile-hide {
+    display: none;
+  }
+}
+
+/* ── Dashboard Grid Inner ────────────────────────────────────────────────── */
+.dashboard-grid-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+}
+@media (max-width: 520px) {
+  .dashboard-grid-inner {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* ── Prayer Times Banner ─────────────────────────────────────────────────── */
+.prayer-times-banner {
+  background: linear-gradient(135deg, var(--brand-mid), var(--brand));
+  border-radius: 20px;
+  padding: 20px;
+  color: white;
+  box-shadow: 0 8px 24px rgba(17,91,61,0.18);
+}
+@media (max-width: 520px) {
+  .prayer-times-banner {
+    padding: 16px;
+    border-radius: 16px;
+  }
+}
+
+.prayer-banner-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+@media (max-width: 520px) {
+  .prayer-banner-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 6px;
+  }
+}
+
+.prayer-banner-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+/* ── 30-Day Calendar Grid ────────────────────────────────────────────────── */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+}
+@media (max-width: 520px) {
+  .calendar-grid {
+    gap: 8px;
+  }
+  .calendar-grid > div {
+    font-size: 11px !important;
+  }
+}
+
+/* ── Custom Habit Input Form ─────────────────────────────────────────────── */
+.add-habit-form {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+  border: 1px solid var(--bg-accent);
+  background-color: var(--bg-primary);
+  border-radius: 12px;
+  padding: 4px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.add-habit-form:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(26,107,74,0.1);
+}
+.add-habit-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  color: var(--text-main);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+.add-habit-btn {
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  font-family: inherit;
+  transition: background-color 0.2s;
+}
+.add-habit-btn:hover {
+  background: var(--brand-mid);
+}
+
+/* ── Prayer Times Tab ────────────────────────────────────────────────────── */
+.prayer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prayer-header-box {
+  background: linear-gradient(to bottom, #112d42 0%, #1a3a5c 100%);
+  border-radius: 16px;
+  padding: 20px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(17,45,66,0.15);
+}
+@media (max-width: 520px) {
+  .prayer-header-box {
+    padding: 14px;
+    border-radius: 14px;
+  }
+}
+
+.prayer-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .prayer-header-top {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 16px;
+  }
+}
+
+.next-prayer-box {
+  background-color: rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 8px 14px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+}
+@media (max-width: 480px) {
+  .next-prayer-box {
+    width: 100%;
+  }
+}
+
+.prayer-content-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+@media (max-width: 520px) {
+  .prayer-content-grid {
+    gap: 12px;
+  }
+}
+
+.prayer-column-card {
+  flex: 1;
+  min-width: 290px;
+  background-color: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--bg-accent);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 520px) {
+  .prayer-column-card {
+    min-width: 100%;
+    padding: 14px;
+  }
+}
+
+.prayer-column-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+@media (max-width: 520px) {
+  .prayer-column-side {
+    width: 100%;
   }
 }
