@@ -125,7 +125,10 @@ export const Athkar: React.FC = () => {
   const [morning, setMorning] = useState<Dhikr[]>(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY + "_morning");
-      if (s) { const p = JSON.parse(s); if (p.date === todayStr) return p.data; }
+      if (s) {
+        const p = JSON.parse(s);
+        if (p && p.date === todayStr && Array.isArray(p.data)) return p.data;
+      }
     } catch { /* ignore */ }
     return initDhikr(MORNING_ATHKAR);
   });
@@ -133,7 +136,10 @@ export const Athkar: React.FC = () => {
   const [evening, setEvening] = useState<Dhikr[]>(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY + "_evening");
-      if (s) { const p = JSON.parse(s); if (p.date === todayStr) return p.data; }
+      if (s) {
+        const p = JSON.parse(s);
+        if (p && p.date === todayStr && Array.isArray(p.data)) return p.data;
+      }
     } catch { /* ignore */ }
     return initDhikr(EVENING_ATHKAR);
   });
