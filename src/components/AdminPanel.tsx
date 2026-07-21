@@ -5,6 +5,9 @@ import {
   query,
   orderBy,
   limit,
+  doc,
+  deleteDoc,
+  updateDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -59,42 +62,113 @@ function methodBadge(method: string) {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
+interface DeveloperMessage {
+  id: string;
+  uid: string;
+  name: string;
+  email: string;
+  phone: string;
+  customContact: string;
+  category: string;
+  message: string;
+  timestamp: number;
+  status: string;
+}
+
+function categoryBadge(category: string) {
+  const map: Record<string, { label: string; color: string; bg: string }> = {
+    color_theme: { label: "ألوان وتصميم",  color: "#b45309", bg: "#fef3c7" },
+    add_feature: { label: "إضافة ميزة",     color: "#1d4ed8", bg: "#eff6ff" },
+    report_bug:  { label: "إبلاغ عن مشكلة", color: "#b91c1c", bg: "#fef2f2" },
+    other:       { label: "اقتراح عام / أخرى", color: "#6d28d9", bg: "#f5f3ff" },
+  };
+  const c = map[category] ?? { label: category, color: "#4b5563", bg: "#f3f4f6" };
+  return (
+    <span style={{
+      padding: "2px 10px",
+      borderRadius: "20px",
+      fontSize: "11px",
+      fontWeight: "bold",
+      color: c.color,
+      backgroundColor: c.bg,
+      border: `1px solid ${c.color}33`,
+    }}>
+      {c.label}
+    </span>
+  );
+}
+
+function statusBadge(status: string) {
+  const resolved = status === "resolved";
+  return (
+    <span style={{
+      padding: "2px 10px",
+      borderRadius: "20px",
+      fontSize: "11px",
+      fontWeight: "bold",
+      color: resolved ? "#047857" : "#c2410c",
+      backgroundColor: resolved ? "#ecfdf5" : "#fff7ed",
+      border: `1px solid ${resolved ? "#047857" : "#c2410c"}33`,
+    }}>
+      {resolved ? "مقروءة" : "جديدة"}
+    </span>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export const AdminPanel: React.FC = () => {
   const [logs, setLogs] = useState<UserLog[]>([]);
+  const [messages, setMessages] = useState<DeveloperMessage[]>([]);
+  const [activeSubTab, setActiveSubTab] = useState<"logs" | "messages">("logs");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLog, setSelectedLog] = useState<UserLog | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<DeveloperMessage | null>(null);
 
   useEffect(() => {
-    const fetchLogs = async () => {
+    const fetchData = async () => {
       if (!db) {
         setError("لوحة الإدارة تتطلب إعداد Firebase/Firestore صحيحاً في ملف البيئة.");
         setLoading(false);
         return;
       }
       try {
-        const q = query(
+        // Fetch activity logs
+        const qLogs = query(
           collection(db, "user_activity"),
           orderBy("timestamp", "desc"),
           limit(200)
         );
-        const snapshot = await getDocs(q);
-        const data: UserLog[] = snapshot.docs.map((doc) => ({
+        const logsSnapshot = await getDocs(qLogs);
+        const logsData: UserLog[] = logsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...(doc.data() as Omit<UserLog, "id">),
         }));
-        setLogs(data);
+        setLogs(logsData);
+
+        // Fetch developer messages
+        const qMsgs = query(
+          collection(db, "developer_messages"),
+          orderBy("timestamp", "desc"),
+          limit(100)
+        );
+        const msgsSnapshot = await getDocs(qMsgs);
+        const msgsData: DeveloperMessage[] = msgsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<DeveloperMessage, "id">),
+        }));
+        setMessages(msgsData);
       } catch (e: any) {
         setError("تعذّر تحميل البيانات. تأكد من تفعيل Firestore في Firebase Console.");
       } finally {
         setLoading(false);
       }
     };
-    fetchLogs();
+    fetchData();
   }, []);
 
-  const filtered = logs.filter((l) => {
+  const filteredLogs = logs.filter((l) => {
     const term = searchTerm.toLowerCase();
     return (
       l.email?.toLowerCase().includes(term) ||
@@ -104,12 +178,41 @@ export const AdminPanel: React.FC = () => {
     );
   });
 
+  const handleDeleteMessage = async (msgId: string) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذه الرسالة نهائياً؟")) return;
+    try {
+      if (db) {
+        await deleteDoc(doc(db, "developer_messages", msgId));
+        setMessages((prev) => prev.filter((m) => m.id !== msgId));
+        setSelectedMessage(null);
+      }
+    } catch {
+      alert("فشل حذف الرسالة.");
+    }
+  };
+
+  const handleToggleMessageStatus = async (msg: DeveloperMessage, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextStatus = msg.status === "resolved" ? "pending" : "resolved";
+    try {
+      if (db) {
+        await updateDoc(doc(db, "developer_messages", msg.id), {
+          status: nextStatus,
+        });
+        setMessages((prev) =>
+          prev.map((m) => (m.id === msg.id ? { ...m, status: nextStatus } : m))
+        );
+        if (selectedMessage && selectedMessage.id === msg.id) {
+          setSelectedMessage((prev) => prev ? { ...prev, status: nextStatus } : null);
+        }
+      }
+    } catch {
+      alert("فشل تحديث حالة الرسالة.");
+    }
+  };
+
   // Stats
   const uniqueUsers = new Set(logs.map((l) => l.uid || l.email)).size;
-  const today = new Date().toDateString();
-  const todayLogins = logs.filter(
-    (l) => new Date(l.timestamp).toDateString() === today
-  ).length;
   const methodCounts = logs.reduce((acc, l) => {
     acc[l.method] = (acc[l.method] || 0) + 1;
     return acc;
@@ -137,7 +240,7 @@ export const AdminPanel: React.FC = () => {
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <StatChip label="إجمالي الدخول" value={logs.length} color="#60a5fa" />
           <StatChip label="مستخدمون فريدون" value={uniqueUsers} color="#34d399" />
-          <StatChip label="دخول اليوم" value={todayLogins} color="#f59e0b" />
+          <StatChip label="رسائل المقترحات" value={messages.length} color="#f59e0b" />
         </div>
       </div>
 
@@ -154,28 +257,65 @@ export const AdminPanel: React.FC = () => {
         ))}
       </div>
 
-      {/* Search */}
-      <div style={{ padding: "0 0 16px" }}>
-        <div style={{ position: "relative" }}>
-          <svg style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}
-            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="ابحث بالاسم، البريد، IP، أو المدينة..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={searchInput}
-          />
+      {/* Sub-tabs and Search */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 0 8px", flexWrap: "wrap", gap: "16px" }}>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={() => setActiveSubTab("logs")}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "12px",
+              border: "1px solid var(--bg-accent)",
+              backgroundColor: activeSubTab === "logs" ? "var(--brand)" : "var(--bg-card)",
+              color: activeSubTab === "logs" ? "white" : "var(--text-main)",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: "13px",
+              transition: "all 0.2s"
+            }}
+          >
+            سجلات الدخول ({logs.length})
+          </button>
+          <button
+            onClick={() => setActiveSubTab("messages")}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "12px",
+              border: "1px solid var(--bg-accent)",
+              backgroundColor: activeSubTab === "messages" ? "var(--brand)" : "var(--bg-card)",
+              color: activeSubTab === "messages" ? "white" : "var(--text-main)",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: "13px",
+              transition: "all 0.2s"
+            }}
+          >
+            رسائل المستخدمين ({messages.length})
+          </button>
         </div>
+
+        {activeSubTab === "logs" && (
+          <div style={{ position: "relative", flex: 1, maxWidth: "320px" }}>
+            <svg style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder="ابحث بالاسم، البريد، IP، أو المدينة..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={searchInput}
+            />
+          </div>
+        )}
       </div>
 
       {/* Table */}
       {loading ? (
         <div style={loadingBox}>
           <div style={spinner} />
-          <p style={{ color: "var(--text-muted)", marginTop: "12px" }}>جاري تحميل سجلات المستخدمين...</p>
+          <p style={{ color: "var(--text-muted)", marginTop: "12px" }}>جاري تحميل البيانات...</p>
         </div>
       ) : error ? (
         <div style={errorBox}>
@@ -184,73 +324,159 @@ export const AdminPanel: React.FC = () => {
           </svg>
           <p>{error}</p>
         </div>
-      ) : filtered.length === 0 ? (
-        <div style={emptyBox}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-          <p style={{ color: "var(--text-muted)", marginTop: "8px" }}>
-            {searchTerm ? "لا توجد نتائج مطابقة للبحث" : "لا توجد سجلات دخول حتى الآن"}
-          </p>
-        </div>
-      ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={table}>
-            <thead>
-              <tr style={tableHead}>
-                <th style={th}>#</th>
-                <th style={th}>الاسم</th>
-                <th style={th}>البريد / الهاتف</th>
-                <th style={th}>طريقة الدخول</th>
-                <th style={th}>عنوان IP</th>
-                <th style={th}>الموقع</th>
-                <th style={th}>وقت الدخول</th>
-                <th style={th}>عدد مرات الدخول</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((log, idx) => (
-                <tr
-                  key={log.id}
-                  style={{
-                    ...tableRow,
-                    backgroundColor: idx % 2 === 0 ? "var(--bg-card)" : "var(--bg-primary)",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => setSelectedLog(log)}
-                >
-                  <td style={td}>{idx + 1}</td>
-                  <td style={{ ...td, fontWeight: "600" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={avatar}>{(log.name || "؟")[0]}</div>
-                      {log.name || "—"}
-                    </div>
-                  </td>
-                  <td style={{ ...td, direction: "ltr", textAlign: "left", fontSize: "12px", color: "var(--text-muted)" }}>
-                    {log.email || log.phone || "—"}
-                  </td>
-                  <td style={td}>{methodBadge(log.method)}</td>
-                  <td style={{ ...td, fontFamily: "monospace", fontSize: "12px", color: "#3b82f6" }}>
-                    {log.ip || "—"}
-                  </td>
-                  <td style={{ ...td, fontSize: "12px" }}>
-                    {log.city && log.country ? `${log.city}، ${log.country}` : "—"}
-                  </td>
-                  <td style={{ ...td, fontSize: "12px", color: "var(--text-muted)" }}>
-                    {log.timestamp ? formatDate(log.timestamp) : "—"}
-                  </td>
-                  <td style={{ ...td, textAlign: "center" }}>
-                    <span style={countBadge}>{log.loginCount || 1}</span>
-                  </td>
+      ) : activeSubTab === "logs" ? (
+        filteredLogs.length === 0 ? (
+          <div style={emptyBox}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <p style={{ color: "var(--text-muted)", marginTop: "8px" }}>لا توجد نتائج مطابقة للبحث</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={table}>
+              <thead>
+                <tr style={tableHead}>
+                  <th style={th}>#</th>
+                  <th style={th}>الاسم</th>
+                  <th style={th}>البريد / الهاتف</th>
+                  <th style={th}>طريقة الدخول</th>
+                  <th style={th}>عنوان IP</th>
+                  <th style={th}>الموقع</th>
+                  <th style={th}>وقت الدخول</th>
+                  <th style={th}>عدد مرات الدخول</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredLogs.map((log, idx) => (
+                  <tr
+                    key={log.id}
+                    style={{
+                      ...tableRow,
+                      backgroundColor: idx % 2 === 0 ? "var(--bg-card)" : "var(--bg-primary)",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => setSelectedLog(log)}
+                  >
+                    <td style={td}>{idx + 1}</td>
+                    <td style={{ ...td, fontWeight: "600" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={avatar}>{(log.name || "؟")[0]}</div>
+                        {log.name || "—"}
+                      </div>
+                    </td>
+                    <td style={{ ...td, direction: "ltr", textAlign: "left", fontSize: "12px", color: "var(--text-muted)" }}>
+                      {log.email || log.phone || "—"}
+                    </td>
+                    <td style={td}>{methodBadge(log.method)}</td>
+                    <td style={{ ...td, fontFamily: "monospace", fontSize: "12px", color: "#3b82f6" }}>
+                      {log.ip || "—"}
+                    </td>
+                    <td style={{ ...td, fontSize: "12px" }}>
+                      {log.city && log.country ? `${log.city}، ${log.country}` : "—"}
+                    </td>
+                    <td style={{ ...td, fontSize: "12px", color: "var(--text-muted)" }}>
+                      {log.timestamp ? formatDate(log.timestamp) : "—"}
+                    </td>
+                    <td style={{ ...td, textAlign: "center" }}>
+                      <span style={countBadge}>{log.loginCount || 1}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : (
+        /* Messages Tab */
+        messages.length === 0 ? (
+          <div style={emptyBox}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <p style={{ color: "var(--text-muted)", marginTop: "8px" }}>لا توجد رسائل أو مقترحات من المستخدمين حتى الآن</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={table}>
+              <thead>
+                <tr style={tableHead}>
+                  <th style={th}>#</th>
+                  <th style={th}>المرسل</th>
+                  <th style={th}>نوع الاقتراح</th>
+                  <th style={th}>محتوى الرسالة</th>
+                  <th style={th}>التواصل</th>
+                  <th style={th}>التاريخ</th>
+                  <th style={th}>الحالة</th>
+                  <th style={th}>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {messages.map((msg, idx) => (
+                  <tr
+                    key={msg.id}
+                    style={{
+                      ...tableRow,
+                      backgroundColor: idx % 2 === 0 ? "var(--bg-card)" : "var(--bg-primary)",
+                      cursor: "pointer",
+                      opacity: msg.status === "resolved" ? 0.75 : 1,
+                    }}
+                    onClick={() => setSelectedMessage(msg)}
+                  >
+                    <td style={td}>{idx + 1}</td>
+                    <td style={{ ...td, fontWeight: "600" }}>{msg.name || "ضيف"}</td>
+                    <td style={td}>{categoryBadge(msg.category)}</td>
+                    <td style={{ ...td, maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {msg.message}
+                    </td>
+                    <td style={{ ...td, fontSize: "12px", color: "var(--text-muted)" }}>
+                      {msg.customContact || msg.email || msg.phone || "—"}
+                    </td>
+                    <td style={{ ...td, fontSize: "12px", color: "var(--text-muted)" }}>
+                      {msg.timestamp ? formatDate(msg.timestamp) : "—"}
+                    </td>
+                    <td style={td}>{statusBadge(msg.status)}</td>
+                    <td style={td} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => handleToggleMessageStatus(msg, e)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          color: "var(--brand)",
+                          marginLeft: "12px",
+                          fontWeight: "bold"
+                        }}
+                        title={msg.status === "resolved" ? "تغيير لـ جديدة" : "تغيير لـ مقروءة"}
+                      >
+                        {msg.status === "resolved" ? "🔁 جديدة" : "✅ مقروءة"}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          color: "var(--color-error)",
+                          fontWeight: "bold"
+                        }}
+                        title="حذف نهائياً"
+                      >
+                        🗑️ حذف
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
 
-      {/* Detail Modal */}
+      {/* Log Detail Modal */}
       {selectedLog && (
         <div style={modalOverlay} onClick={() => setSelectedLog(null)}>
           <div style={modal} onClick={(e) => e.stopPropagation()}>
@@ -273,6 +499,72 @@ export const AdminPanel: React.FC = () => {
               <DetailRow label="وقت الدخول" value={selectedLog.timestamp ? formatDate(selectedLog.timestamp) : "—"} />
               <DetailRow label="عدد مرات الدخول" value={String(selectedLog.loginCount || 1)} />
               <DetailRow label="معرف المستخدم (UID)" value={selectedLog.uid || "—"} mono />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Developer Message Detail Modal */}
+      {selectedMessage && (
+        <div style={modalOverlay} onClick={() => setSelectedMessage(null)}>
+          <div style={modal} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: 0, fontSize: "17px" }}>تفاصيل رسالة المستخدم</h3>
+              <button
+                onClick={() => setSelectedMessage(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: "20px", lineHeight: 1 }}
+              >✕</button>
+            </div>
+            <div style={detailAvatar}>📨</div>
+            <h4 style={{ textAlign: "center", margin: "8px 0 20px", fontSize: "18px" }}>{selectedMessage.name || "ضيف"}</h4>
+            
+            <div style={{ marginBottom: "16px", padding: "12px", backgroundColor: "var(--bg-primary)", borderRadius: "10px", border: "1px solid var(--bg-accent)" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: "bold", display: "block", marginBottom: "6px" }}>محتوى الاقتراح / الرسالة:</span>
+              <p style={{ fontSize: "14px", color: "var(--text-main)", whiteSpace: "pre-wrap", margin: 0 }}>{selectedMessage.message}</p>
+            </div>
+
+            <div style={detailGrid}>
+              <DetailRow label="نوع الرسالة" value={selectedMessage.category === "color_theme" ? "تعديل ألوان وتصميم" : selectedMessage.category === "add_feature" ? "طلب إضافة ميزة" : selectedMessage.category === "report_bug" ? "إبلاغ عن مشكلة" : "اقتراح عام / أخرى"} />
+              <DetailRow label="تاريخ الإرسال" value={selectedMessage.timestamp ? formatDate(selectedMessage.timestamp) : "—"} />
+              <DetailRow label="وسيلة التواصل المدخلة" value={selectedMessage.customContact || "—"} mono />
+              <DetailRow label="البريد الإلكتروني للحساب" value={selectedMessage.email || "—"} mono />
+              <DetailRow label="رقم هاتف الحساب" value={selectedMessage.phone || "—"} mono />
+              <DetailRow label="معرف المستخدم (UID)" value={selectedMessage.uid || "—"} mono />
+              <DetailRow label="حالة الرسالة" value={selectedMessage.status === "resolved" ? "مقروءة" : "جديدة"} />
+            </div>
+
+            <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
+              <button
+                onClick={(e) => handleToggleMessageStatus(selectedMessage, e)}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: "10px",
+                  border: "none",
+                  backgroundColor: "var(--brand)",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "13px"
+                }}
+              >
+                {selectedMessage.status === "resolved" ? "تغيير لـ غير مقروءة" : "تغيير لـ مقروءة"}
+              </button>
+              <button
+                onClick={() => handleDeleteMessage(selectedMessage.id)}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--color-error)",
+                  backgroundColor: "transparent",
+                  color: "var(--color-error)",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "13px"
+                }}
+              >
+                حذف
+              </button>
             </div>
           </div>
         </div>

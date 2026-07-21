@@ -306,65 +306,64 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   };
 
   return (
-    <div style={loginWrapperStyle}>
+    <div className="login-wrapper">
       {/* Theme Toggle Button for Login screen */}
       <button 
         onClick={onToggleTheme} 
-        style={cornerThemeToggleStyle}
+        className="login-theme-toggle emoji-accent"
         title={theme === "dark" ? "الوضع المضيء" : "الوضع الداكن"}
-        className="emoji-accent"
       >
         {theme === "dark" ? "☀️" : "🌙"}
       </button>
 
       {/* Background soft blobs for relaxing atmosphere */}
-      <div style={blobLeftStyle} />
-      <div style={blobRightStyle} />
+      <div className="login-blob-left" />
+      <div className="login-blob-right" />
 
-      <div className="login-card-responsive" style={loginCardStyle}>
+      <div className="login-card-responsive login-card">
         {/* Logo and Greeting */}
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={logoIconStyle} className="emoji-accent">🌿</div>
-          <h2 style={{ fontFamily: "Thmanyah Serif Display", fontSize: "28px", color: "var(--color-sage)" }}>
+        <div className="login-logo-header">
+          <div className="login-logo-icon emoji-accent">🌿</div>
+          <h2 className="login-logo-title">
             توازن
           </h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "6px" }}>
+          <p className="login-logo-subtitle">
             مساحتك الهادئة للسكينة وبناء الذات
           </p>
         </div>
 
         {/* Global Loading Screen */}
         {loading ? (
-          <div style={loadingContainerStyle}>
-            <div style={spinnerStyle} />
-            <p style={{ color: "var(--text-main)", fontWeight: "500", fontSize: "15px" }}>{loadingMessage}</p>
+          <div className="login-loading-container">
+            <div className="login-spinner" />
+            <p className="login-loading-text">{loadingMessage}</p>
           </div>
         ) : (
           <>
             {/* Tabs for choosing login method */}
             {!otpSent && (
-              <div className="login-tabs-responsive" style={tabsContainerStyle}>
+              <div className="login-tabs-responsive login-tabs">
                 <button
                   onClick={() => { setMethod("email"); setErrorMsg(""); }}
-                  style={{ ...tabBtnStyle, borderBottomColor: method === "email" ? "var(--color-sage)" : "transparent", color: method === "email" ? "var(--color-sage)" : "var(--text-muted)" }}
+                  className={`login-tab-btn ${method === "email" ? "active" : ""}`}
                 >
                   البريد الإلكتروني
                 </button>
                 <button
                   onClick={() => { setMethod("phone"); setErrorMsg(""); }}
-                  style={{ ...tabBtnStyle, borderBottomColor: method === "phone" ? "var(--color-sage)" : "transparent", color: method === "phone" ? "var(--color-sage)" : "var(--text-muted)" }}
+                  className={`login-tab-btn ${method === "phone" ? "active" : ""}`}
                 >
                   رقم الهاتف
                 </button>
                 <button
                   onClick={() => { setMethod("google"); setErrorMsg(""); }}
-                  style={{ ...tabBtnStyle, borderBottomColor: method === "google" ? "var(--color-sage)" : "transparent", color: method === "google" ? "var(--color-sage)" : "var(--text-muted)" }}
+                  className={`login-tab-btn ${method === "google" ? "active" : ""}`}
                 >
                   جوجل
                 </button>
                 <button
                   onClick={() => { setMethod("facebook"); setErrorMsg(""); }}
-                  style={{ ...tabBtnStyle, borderBottomColor: method === "facebook" ? "var(--color-sage)" : "transparent", color: method === "facebook" ? "var(--color-sage)" : "var(--text-muted)" }}
+                  className={`login-tab-btn ${method === "facebook" ? "active" : ""}`}
                 >
                   فيسبوك
                 </button>
@@ -372,50 +371,50 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
             )}
 
             {/* Error Message Alert */}
-            {errorMsg && <div style={errorAlertStyle}>{errorMsg}</div>}
+            {errorMsg && <div className="login-error-alert">{errorMsg}</div>}
 
             {/* --- EMAIL LOGIN FORM --- */}
             {method === "email" && (
-              <form onSubmit={handleEmailSubmit} style={formStyle}>
+              <form onSubmit={handleEmailSubmit} className="login-form">
                 {isRegistering && (
-                  <div style={inputGroupStyle}>
-                    <label style={labelStyle}>الاسم الشخصي</label>
+                  <div className="login-input-group">
+                    <label className="login-label">الاسم الشخصي</label>
                     <input
                       type="text"
                       placeholder="أدخل اسمك الكريم"
                       value={emailName}
                       onChange={(e) => setEmailName(e.target.value)}
-                      style={inputStyle}
+                      className="login-input"
                       required
                     />
                   </div>
                 )}
                 
-                <div style={inputGroupStyle}>
-                  <label style={labelStyle}>البريد الإلكتروني</label>
+                <div className="login-input-group">
+                  <label className="login-label">البريد الإلكتروني</label>
                   <input
                     type="email"
                     placeholder="example@mail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    style={inputStyle}
+                    className="login-input"
                     required
                   />
                 </div>
 
-                <div style={inputGroupStyle}>
-                  <label style={labelStyle}>كلمة المرور</label>
+                <div className="login-input-group">
+                  <label className="login-label">كلمة المرور</label>
                   <input
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    style={inputStyle}
+                    className="login-input"
                     required
                   />
                 </div>
 
-                <button type="submit" style={submitBtnStyle}>
+                <button type="submit" className="login-submit-btn">
                   {isRegistering ? "إنشاء حساب جديد ودخول" : "تسجيل الدخول"}
                 </button>
 
@@ -423,7 +422,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                   <button
                     type="button"
                     onClick={() => { setIsRegistering(!isRegistering); setErrorMsg(""); }}
-                    style={toggleLinkStyle}
+                    className="login-toggle-link"
                   >
                     {isRegistering ? "لديك حساب بالفعل؟ سجل دخولك" : "ليس لديك حساب؟ سجل حساباً جديداً"}
                   </button>
@@ -433,11 +432,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
             {/* --- PHONE LOGIN FORM --- */}
             {method === "phone" && (
-              <div style={formStyle}>
+              <div className="login-form">
                 {!otpSent ? (
-                  <form onSubmit={handlePhoneSendOtp} style={formStyle}>
-                    <div style={inputGroupStyle}>
-                      <label style={labelStyle}>رقم الهاتف المحمول</label>
+                  <form onSubmit={handlePhoneSendOtp} className="login-form">
+                    <div className="login-input-group">
+                      <label className="login-label">رقم الهاتف المحمول</label>
                       {/* Country Selector */}
                       <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
                         {([["+20", "🇪🇬 مصر"], ["+966", "🇸🇦 السعودية"]] as const).map(([code, label]) => (
@@ -445,42 +444,30 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                             key={code}
                             type="button"
                             onClick={() => setCountryCode(code)}
-                            style={{
-                              flex: 1,
-                              padding: "8px",
-                              border: `2px solid ${countryCode === code ? "var(--color-sage)" : "var(--bg-accent)"}`,
-                              borderRadius: "var(--radius-sm)",
-                              backgroundColor: countryCode === code ? "var(--color-sage-light)" : "transparent",
-                              color: countryCode === code ? "var(--color-sage)" : "var(--text-muted)",
-                              fontFamily: "inherit",
-                              fontSize: "13px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
-                              transition: "var(--transition-normal)",
-                            }}
+                            className={`country-selector-btn ${countryCode === code ? "active" : ""}`}
                           >
                             {label}
                           </button>
                         ))}
                       </div>
-                      <div style={phoneInputWrapperStyle}>
-                        <span style={phonePrefixStyle}>{countryCode}</span>
+                      <div className="phone-input-wrapper">
+                        <span className="phone-prefix">{countryCode}</span>
                         <input
                           type="tel"
                           placeholder={countryCode === "+20" ? "1012345678" : "501234567"}
                           value={phone}
                           onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                          style={phoneInputStyle}
+                          className="phone-input"
                           required
                         />
                       </div>
                     </div>
-                    <button type="submit" style={submitBtnStyle}>
+                    <button type="submit" className="login-submit-btn">
                       إرسال رمز التحقق (OTP)
                     </button>
                   </form>
                 ) : (
-                  <form onSubmit={handlePhoneVerifyOtp} style={formStyle}>
+                  <form onSubmit={handlePhoneVerifyOtp} className="login-form">
                     <div style={{ textAlign: "center", marginBottom: "8px" }}>
                       <p style={{ fontSize: "14px", color: "var(--text-main)" }}>
                         تم إرسال الرمز للهاتف: <strong>{submittedPhone || `${countryCode} ${phone}`}</strong>
@@ -490,20 +477,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                       </p>
                     </div>
 
-                    <div style={inputGroupStyle}>
-                      <label style={labelStyle}>رمز التحقق (OTP)</label>
+                    <div className="login-input-group">
+                      <label className="login-label">رمز التحقق (OTP)</label>
                       <input
                         type="text"
                         maxLength={6}
                         placeholder="••••••"
                         value={otpCode}
                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                        style={{ ...inputStyle, letterSpacing: "8px", textAlign: "center", fontSize: "20px" }}
+                        className="login-input login-otp-input"
                         required
                       />
                     </div>
 
-                    <button type="submit" style={submitBtnStyle}>
+                    <button type="submit" className="login-submit-btn">
                       تحقق ودخول
                     </button>
 
@@ -513,7 +500,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                           إعادة الإرسال خلال {otpTimer} ثانية
                         </span>
                       ) : (
-                        <button type="button" onClick={resendOtp} style={toggleLinkStyle}>
+                        <button type="button" onClick={resendOtp} className="login-toggle-link">
                           إعادة إرسال رمز التحقق
                         </button>
                       )}
@@ -523,13 +510,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
               </div>
             )}
 
-            {/* --- FACEBOOK LOGIN --- */}
+            {/* --- GOOGLE LOGIN --- */}
             {method === "google" && (
-              <div style={{ ...formStyle, alignItems: "center", padding: "16px 0" }}>
+              <div className="login-oauth-container">
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", textAlign: "center", marginBottom: "16px" }}>
                   استخدم Google للوصول السريع إلى حسابك مع مزامنة آمنة.
                 </p>
-                <button onClick={() => handleOAuthLogin("google")} style={googleBtnStyle}>
+                <button onClick={() => handleOAuthLogin("google")} className="login-google-btn">
                   <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true" style={{ marginLeft: "8px" }}>
                     <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.645 32.658 29.296 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.156 7.967 3.047l5.657-5.657C34.075 6.053 29.336 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.651-.389-3.917z" />
                     <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.156 7.967 3.047l5.657-5.657C34.075 6.053 29.336 4 24 4c-7.818 0-14.656 4.415-17.694 10.691z" />
@@ -541,12 +528,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
               </div>
             )}
 
+            {/* --- FACEBOOK LOGIN --- */}
             {method === "facebook" && (
-              <div style={{ ...formStyle, alignItems: "center", padding: "16px 0" }}>
+              <div className="login-oauth-container">
                 <p style={{ fontSize: "14px", color: "var(--text-muted)", textAlign: "center", marginBottom: "16px" }}>
                   سجل دخولك بنقرة زر واحدة عبر ربط حساب فيسبوك بأمان.
                 </p>
-                <button onClick={() => handleOAuthLogin("facebook")} style={facebookBtnStyle}>
+                <button onClick={() => handleOAuthLogin("facebook")} className="login-facebook-btn">
                   <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style={{ marginLeft: "8px" }}>
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
@@ -556,14 +544,14 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
             )}
 
             {/* Guest Login Divider */}
-            <div style={dividerStyle}>
-              <span style={dividerLineStyle} />
-              <span style={dividerTextStyle}>أو</span>
-              <span style={dividerLineStyle} />
+            <div className="login-divider">
+              <span className="login-divider-line" />
+              <span className="login-divider-text">أو</span>
+              <span className="login-divider-line" />
             </div>
 
             {/* Guest Action */}
-            <button onClick={handleGuestLogin} style={guestBtnStyle}>
+            <button onClick={handleGuestLogin} className="login-guest-btn">
               الاستمرار كضيف (تخطي التسجيل)
             </button>
           </>
@@ -576,299 +564,3 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   );
 };
 
-// Styles for the login screen layout
-const loginWrapperStyle: React.CSSProperties = {
-  minHeight: "100vh",
-  width: "100%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background:
-    "radial-gradient(circle at 15% 20%, rgba(28,108,77,0.10), transparent 28%), radial-gradient(circle at 85% 80%, rgba(224,177,93,0.12), transparent 26%), linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.0) 24%), var(--bg-primary)",
-  position: "relative",
-  overflow: "hidden",
-  padding: "clamp(16px, 3vw, 32px)",
-  transition: "background-color 0.4s ease",
-};
-
-const blobLeftStyle: React.CSSProperties = {
-  position: "absolute",
-  width: "420px",
-  height: "420px",
-  borderRadius: "50%",
-  background: "radial-gradient(circle, rgba(28,108,77,0.16) 0%, rgba(250,248,245,0) 70%)",
-  left: "-160px",
-  top: "-60px",
-  zIndex: 0,
-  pointerEvents: "none",
-};
-
-const blobRightStyle: React.CSSProperties = {
-  position: "absolute",
-  width: "460px",
-  height: "460px",
-  borderRadius: "50%",
-  background: "radial-gradient(circle, rgba(224,177,93,0.15) 0%, rgba(250,248,245,0) 70%)",
-  right: "-180px",
-  bottom: "-120px",
-  zIndex: 0,
-  pointerEvents: "none",
-};
-
-const loginCardStyle: React.CSSProperties = {
-  maxWidth: "min(94vw, 520px)",
-  width: "100%",
-  background: "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,253,248,0.98) 100%)",
-  borderRadius: "30px",
-  padding: "clamp(24px, 4vw, 36px) clamp(18px, 4vw, 32px)",
-  boxShadow: "0 28px 70px rgba(22,38,31,0.11), 0 4px 14px rgba(22,38,31,0.04)",
-  border: "1px solid rgba(28,108,77,0.10)",
-  zIndex: 1,
-  position: "relative",
-  transition: "background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease",
-  animation: "fadeInUp 0.45s var(--ease-out) both",
-  backdropFilter: "blur(18px)",
-};
-
-const logoIconStyle: React.CSSProperties = {
-  width: "64px",
-  height: "64px",
-  background: "linear-gradient(180deg, var(--brand-light), rgba(255,255,255,0.95))",
-  borderRadius: "20px",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "34px",
-  marginBottom: "14px",
-  boxShadow: "0 12px 30px rgba(28,108,77,0.10)",
-  border: "1px solid rgba(28,108,77,0.08)",
-};
-
-const tabsContainerStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-  gap: "8px",
-  marginBottom: "20px",
-  paddingBottom: "16px",
-  borderBottom: "1px solid rgba(28,108,77,0.10)",
-};
-
-const tabBtnStyle: React.CSSProperties = {
-  background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(246,241,232,0.95))",
-  border: "1px solid rgba(28,108,77,0.08)",
-  borderBottom: "2px solid transparent",
-  padding: "12px 10px",
-  fontSize: "12px",
-  fontWeight: "700",
-  cursor: "pointer",
-  color: "var(--text-muted)",
-  fontFamily: "inherit",
-  transition: "var(--transition-normal)",
-  minHeight: "46px",
-  borderRadius: "var(--radius-sm)",
-  boxShadow: "0 4px 14px rgba(22,38,31,0.04)",
-};
-
-const formStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "14px",
-  width: "100%",
-};
-
-const inputGroupStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "6px",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: "13px",
-  fontWeight: "bold",
-  color: "var(--text-muted)",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "12px 16px",
-  border: "1px solid var(--bg-accent)",
-  borderRadius: "var(--radius-sm)",
-  backgroundColor: "var(--bg-primary)",
-  color: "var(--text-main)",
-  outline: "none",
-  fontFamily: "inherit",
-  fontSize: "14px",
-  transition: "var(--transition-normal)",
-};
-
-const phoneInputWrapperStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  border: "1px solid var(--bg-accent)",
-  borderRadius: "var(--radius-sm)",
-  backgroundColor: "var(--bg-primary)",
-  overflow: "hidden",
-  direction: "ltr", // Left to right formatting for numbers
-  minHeight: "48px",
-};
-
-const phonePrefixStyle: React.CSSProperties = {
-  padding: "12px 14px",
-  backgroundColor: "var(--bg-accent)",
-  color: "var(--text-muted)",
-  fontSize: "14px",
-  fontWeight: "500",
-  borderRight: "1px solid var(--bg-accent)",
-  whiteSpace: "nowrap",
-};
-
-const phoneInputStyle: React.CSSProperties = {
-  border: "none",
-  outline: "none",
-  padding: "12px 14px",
-  width: "100%",
-  fontFamily: "inherit",
-  fontSize: "14px",
-  letterSpacing: "1px",
-  backgroundColor: "transparent",
-  color: "var(--text-main)",
-};
-
-const submitBtnStyle: React.CSSProperties = {
-  background: "linear-gradient(180deg, var(--brand-mid), var(--brand))",
-  color: "var(--text-light)",
-  border: "none",
-  fontFamily: "inherit",
-  fontSize: "16px",
-  fontWeight: "bold",
-  padding: "14px 16px",
-  borderRadius: "14px",
-  cursor: "pointer",
-  transition: "var(--transition-normal)",
-  boxShadow: "0 10px 24px rgba(28,108,77,0.18)",
-};
-
-const googleBtnStyle: React.CSSProperties = {
-  background: "linear-gradient(180deg, #ffffff, #fbfaf5)",
-  color: "#1f2937",
-  border: "1px solid rgba(17,24,39,0.10)",
-  fontFamily: "inherit",
-  fontSize: "15px",
-  fontWeight: "700",
-  padding: "14px 18px",
-  borderRadius: "14px",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "6px",
-  width: "100%",
-  boxShadow: "0 8px 20px rgba(17,24,39,0.07)",
-  transition: "var(--transition-normal)",
-};
-
-const toggleLinkStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  color: "var(--color-sage)",
-  fontSize: "13px",
-  fontWeight: "500",
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const facebookBtnStyle: React.CSSProperties = {
-  backgroundColor: "#1877f2",
-  color: "white",
-  border: "none",
-  fontFamily: "inherit",
-  fontSize: "15px",
-  fontWeight: "bold",
-  padding: "14px 18px",
-  borderRadius: "14px",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "100%",
-  boxShadow: "0 4px 12px rgba(24, 119, 242, 0.2)",
-  transition: "var(--transition-normal)",
-};
-
-const dividerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  margin: "24px 0",
-};
-
-const dividerLineStyle: React.CSSProperties = {
-  flex: 1,
-  height: "1px",
-  backgroundColor: "var(--bg-accent)",
-};
-
-const dividerTextStyle: React.CSSProperties = {
-  padding: "0 10px",
-  fontSize: "12px",
-  color: "var(--text-muted)",
-};
-
-const guestBtnStyle: React.CSSProperties = {
-  background: "none",
-  border: "1px solid rgba(28,108,77,0.16)",
-  color: "var(--text-muted)",
-  fontFamily: "inherit",
-  fontSize: "14px",
-  fontWeight: "500",
-  padding: "13px 12px",
-  borderRadius: "14px",
-  cursor: "pointer",
-  width: "100%",
-  transition: "var(--transition-normal)",
-  textAlign: "center",
-};
-
-const errorAlertStyle: React.CSSProperties = {
-  backgroundColor: "#fdf2f2",
-  color: "#c81e1e",
-  padding: "10px 14px",
-  borderRadius: "var(--radius-sm)",
-  fontSize: "13px",
-  marginBottom: "16px",
-  border: "1px solid #fde8e8",
-  textAlign: "center",
-};
-
-const loadingContainerStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "40px 0",
-  gap: "16px",
-};
-
-const spinnerStyle: React.CSSProperties = {
-  width: "36px",
-  height: "36px",
-  border: "3px solid var(--color-sage-light)",
-  borderTopColor: "var(--color-sage)",
-  borderRadius: "50%",
-  animation: "spin 1s linear infinite",
-};
-
-const cornerThemeToggleStyle: React.CSSProperties = {
-  position: "absolute",
-  top: "20px",
-  left: "20px",
-  background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,241,232,0.92))",
-  border: "1px solid rgba(28,108,77,0.08)",
-  borderRadius: "14px",
-  padding: "10px 12px",
-  cursor: "pointer",
-  fontSize: "16px",
-  boxShadow: "0 10px 22px rgba(22,38,31,0.08)",
-  outline: "none",
-  transition: "background-color 0.4s ease, border-color 0.4s ease",
-  zIndex: 10,
-};

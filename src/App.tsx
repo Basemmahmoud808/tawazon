@@ -507,6 +507,57 @@ export default function App() {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  // Developer Modal states & handlers
+  const [showDeveloperModal, setShowDeveloperModal] = useState(false);
+  const [developerMsgType, setDeveloperMsgType] = useState<"color_theme" | "add_feature" | "report_bug" | "other">("color_theme");
+  const [developerMsgText, setDeveloperMsgText] = useState("");
+  const [developerContact, setDeveloperContact] = useState("");
+  const [isSendingMsg, setIsSendingMsg] = useState(false);
+  const [msgSentSuccess, setMsgSentSuccess] = useState(false);
+
+  const handleSubmitDeveloperMsg = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!developerMsgText.trim()) return;
+    setIsSendingMsg(true);
+    try {
+      if (db) {
+        await addDoc(collection(db, "developer_messages"), {
+          uid: userId,
+          name: userName || "ضيف",
+          email: auth?.currentUser?.email || "",
+          phone: auth?.currentUser?.phoneNumber || "",
+          customContact: developerContact.trim(),
+          category: developerMsgType,
+          message: developerMsgText.trim(),
+          timestamp: Date.now(),
+          status: "pending",
+        });
+      } else {
+        const existing = JSON.parse(localStorage.getItem("tawazon_offline_feedback") || "[]");
+        existing.push({
+          uid: userId,
+          name: userName || "ضيف",
+          customContact: developerContact.trim(),
+          category: developerMsgType,
+          message: developerMsgText.trim(),
+          timestamp: Date.now(),
+        });
+        localStorage.setItem("tawazon_offline_feedback", JSON.stringify(existing));
+      }
+      setMsgSentSuccess(true);
+      setDeveloperMsgText("");
+      setDeveloperContact("");
+      setTimeout(() => {
+        setMsgSentSuccess(false);
+        setShowDeveloperModal(false);
+      }, 2500);
+    } catch (error) {
+      alert("حدث خطأ أثناء الإرسال. يرجى المحاولة لاحقاً.");
+    } finally {
+      setIsSendingMsg(false);
+    }
+  };
+
   const handleToggleHabit = (id: string) => {
     const updated = habits.map((h) => 
       h.id === id ? { ...h, completed: !h.completed } : h
@@ -601,10 +652,10 @@ export default function App() {
           onClick={() => setActiveTab("home")}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="9" rx="1" />
-            <rect x="14" y="3" width="7" height="5" rx="1" />
-            <rect x="14" y="12" width="7" height="9" rx="1" />
-            <rect x="3" y="16" width="7" height="5" rx="1" />
+            <rect x="3" y="3" width="7" height="9" rx="1" fill={activeTab === "home" ? "currentColor" : "none"} fillOpacity="0.2" />
+            <rect x="14" y="3" width="7" height="5" rx="1" fill={activeTab === "home" ? "currentColor" : "none"} fillOpacity="0.2" />
+            <rect x="14" y="12" width="7" height="9" rx="1" fill={activeTab === "home" ? "currentColor" : "none"} fillOpacity="0.2" />
+            <rect x="3" y="16" width="7" height="5" rx="1" fill={activeTab === "home" ? "currentColor" : "none"} fillOpacity="0.2" />
           </svg>
           <span>الرئيسية</span>
         </button>
@@ -614,9 +665,9 @@ export default function App() {
           onClick={() => setActiveTab("prayer")}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2C9 5 9 9 9 14h6c0-5 0-9-3-12z" />
+            <path d="M12 2C9 5 9 9 9 14h6c0-5 0-9-3-12z" fill={activeTab === "prayer" ? "currentColor" : "none"} fillOpacity="0.2" />
             <path d="M6 21h12" />
-            <path d="M10 21v-4a2 2 0 0 1 4 0v4" />
+            <path d="M10 21v-4a2 2 0 0 1 4 0v4" fill={activeTab === "prayer" ? "currentColor" : "none"} fillOpacity="0.2" />
           </svg>
           <span>الصلوات</span>
         </button>
@@ -626,8 +677,8 @@ export default function App() {
           onClick={() => setActiveTab("wird")}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" fill={activeTab === "wird" ? "currentColor" : "none"} fillOpacity="0.2" />
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" fill={activeTab === "wird" ? "currentColor" : "none"} fillOpacity="0.2" />
             <path d="M12 7v14" />
           </svg>
           <span>الورد <span className="mobile-hide">اليومي</span></span>
@@ -638,8 +689,8 @@ export default function App() {
           onClick={() => setActiveTab("athkar")}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="8" />
-            <circle cx="12" cy="12" r="3" />
+            <circle cx="12" cy="12" r="8" fill={activeTab === "athkar" ? "currentColor" : "none"} fillOpacity="0.1" />
+            <circle cx="12" cy="12" r="3" fill={activeTab === "athkar" ? "currentColor" : "none"} fillOpacity="0.3" />
           </svg>
           <span>الأذكار</span>
         </button>
@@ -649,7 +700,7 @@ export default function App() {
           onClick={() => setActiveTab("archive")}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill={activeTab === "archive" ? "currentColor" : "none"} fillOpacity="0.2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
@@ -662,8 +713,8 @@ export default function App() {
             className={`nav-button ${activeTab === "admin" ? "active" : ""}`}
             onClick={() => setActiveTab("admin")}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill={activeTab === "admin" ? "currentColor" : "none"} fillOpacity="0.2" />
             </svg>
             <span>الإدارة</span>
           </button>
@@ -713,6 +764,13 @@ export default function App() {
                       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="currentColor" />
                     </svg>
                   )}
+                </button>
+
+                {/* Contact Developer Button */}
+                <button onClick={() => setShowDeveloperModal(true)} style={cardHeaderIconBtnStyle} title="أرسل رسالة أو اقتراحاً للمطور">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1052,6 +1110,109 @@ export default function App() {
         <p style={footerCredit}>جميع الحقوق محفوظة لـ توازن © {new Date().getFullYear()}</p>
 
       </footer>
+
+      {/* ─── Contact Developer Modal ─── */}
+      {showDeveloperModal && (
+        <div style={modalOverlayStyle} onClick={() => setShowDeveloperModal(false)}>
+          <div style={{ ...duaModalContentStyle, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", marginBottom: "16px" }}>
+              <h3 style={{ margin: 0, fontFamily: "Thmanyah Serif Display, serif", color: "var(--brand)" }}>
+                تواصل مع المطور 🌿
+              </h3>
+              <button 
+                onClick={() => setShowDeveloperModal(false)}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "20px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {msgSentSuccess ? (
+              <div style={{ padding: "30px 10px", color: "var(--brand)", fontWeight: "bold" }}>
+                <p style={{ fontSize: "16px", marginBottom: "8px" }}>تم إرسال اقتراحك بنجاح! 🎉</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)" }}>شكراً لك على مساعدتنا في تحسين توازن.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitDeveloperMsg} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "14px", textAlign: "right" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: "bold", color: "var(--text-muted)" }}>نوع الرسالة</label>
+                  <select 
+                    value={developerMsgType}
+                    onChange={(e: any) => setDeveloperMsgType(e.target.value)}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "10px",
+                      border: "1px solid var(--bg-accent)",
+                      backgroundColor: "var(--bg-primary)",
+                      color: "var(--text-main)",
+                      fontFamily: "inherit",
+                      outline: "none"
+                    }}
+                  >
+                    <option value="color_theme">تعديل ألوان وتصميم</option>
+                    <option value="add_feature">طلب إضافة ميزة</option>
+                    <option value="report_bug">الإبلاغ عن مشكلة</option>
+                    <option value="other">اقتراح عام / أخرى</option>
+                  </select>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: "bold", color: "var(--text-muted)" }}>اقتراحك أو رسالتك</label>
+                  <textarea
+                    rows={4}
+                    value={developerMsgText}
+                    onChange={(e) => setDeveloperMsgText(e.target.value)}
+                    placeholder="اكتب هنا ما تحتاجه (تعديل ألوان، إضافة ميزات، أي شيء تفكر فيه)..."
+                    required
+                    style={{
+                      padding: "12px",
+                      borderRadius: "10px",
+                      border: "1px solid var(--bg-accent)",
+                      backgroundColor: "var(--bg-primary)",
+                      color: "var(--text-main)",
+                      fontFamily: "inherit",
+                      outline: "none",
+                      resize: "none"
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", fontWeight: "bold", color: "var(--text-muted)" }}>طريقة التواصل معك (اختياري)</label>
+                  <input
+                    type="text"
+                    value={developerContact}
+                    onChange={(e) => setDeveloperContact(e.target.value)}
+                    placeholder="رقم هاتف أو بريد إلكتروني للتواصل"
+                    style={{
+                      padding: "10px",
+                      borderRadius: "10px",
+                      border: "1px solid var(--bg-accent)",
+                      backgroundColor: "var(--bg-primary)",
+                      color: "var(--text-main)",
+                      fontFamily: "inherit",
+                      outline: "none"
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSendingMsg}
+                  style={{
+                    ...duaModalBtnStyle,
+                    marginTop: "10px",
+                    opacity: isSendingMsg ? 0.7 : 1,
+                    cursor: isSendingMsg ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {isSendingMsg ? "جاري الإرسال..." : "إرسال الرسالة للمطور"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
