@@ -3,6 +3,7 @@ import { useLocalStorage, obfuscate, deobfuscate } from "./hooks/useLocalStorage
 import { useAdminGuard } from "./hooks/useAdminGuard";
 import type { Habit } from "./components/HabitTracker";
 import { Login } from "./components/Login";
+import { GardenView } from "./components/GardenView";
 
 // Archive & lazy imports
 import type { DailyLog } from "./components/HistoryArchive";
@@ -24,26 +25,7 @@ const DEFAULT_HABITS: Habit[] = [
   { id: "3", name: "كتابة فكرة امتنان واحدة", completed: false, category: "mental" },
 ];
 
-const MOCK_DAILY_LOGS: DailyLog[] = [
-  {
-    id: (Date.now() - 24 * 60 * 60 * 1000).toString(),
-    dateString: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
-    rawDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString(),
-    mood: "happy",
-    note: "قضيت يوماً رائعاً في الطبيعة وأنهيت قراءة كتابي المفضل.",
-    completedHabits: ["شرب كوب من الماء عند الاستيقاظ", "التنفس بعمق لمدة دقيقتين"],
-    totalHabits: 3,
-  },
-  {
-    id: (Date.now() - 2 * 24 * 60 * 60 * 1000).toString(),
-    dateString: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
-    rawDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toDateString(),
-    mood: "calm",
-    note: "شعور بالهدوء والسلام الداخلي اليوم. تمرين التنفس المربع ساعدني جداً على التركيز والتخلص من توتر العمل.",
-    completedHabits: ["التنفس بعمق لمدة دقيقتين", "كتابة فكرة امتنان واحدة", "شرب كوب من الماء عند الاستيقاظ"],
-    totalHabits: 3,
-  }
-];
+
 
 export default function App() {
   const [isSummerTime, setIsSummerTime] = useLocalStorage<boolean>("tawazon_use_summer_time", true);
@@ -130,7 +112,7 @@ export default function App() {
   const [theme, setTheme] = useLocalStorage<"light" | "dark">("tawazon_theme", "light");
   const [isLoggedIn, setIsLoggedIn] = useLocalStorage<boolean>("tawazon_logged_in", false);
   const [userName, setUserName] = useLocalStorage<string>("tawazon_user_name", "");
-  const [dailyLogs, setDailyLogs] = useLocalStorage<DailyLog[]>("tawazon_daily_logs", MOCK_DAILY_LOGS);
+  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
   const [notifiedCompletionToday, setNotifiedCompletionToday] = useLocalStorage<string>("tawazon_last_notified_date", "");
 
   // Send desktop notification when all habits are completed
@@ -144,12 +126,14 @@ export default function App() {
     const daysKey = `tawazon_${userId}_90day_completion_v6`;
     const startKey = `tawazon_${userId}_90day_start_date`;
     const titleKey = `tawazon_${userId}_90day_challenge_title`;
+    const logsKey = `tawazon_${userId}_daily_logs`;
 
     // 1. Load from scoped LocalStorage (offline-first)
     let loadedHabits = DEFAULT_HABITS;
     let loadedDays = Array(90).fill(false);
     let loadedStart = new Date().toISOString();
     let loadedTitle = "التزام بالرياضة والقراءة اليومية";
+    let loadedLogs: DailyLog[] = [];
 
     try {
       const rawHabits = localStorage.getItem(habitsKey);
@@ -163,6 +147,9 @@ export default function App() {
 
       const rawTitle = localStorage.getItem(titleKey);
       if (rawTitle) loadedTitle = JSON.parse(deobfuscate(rawTitle));
+
+      const rawLogs = localStorage.getItem(logsKey);
+      if (rawLogs) loadedLogs = JSON.parse(deobfuscate(rawLogs));
     } catch {
       try {
         const rawHabits = localStorage.getItem(habitsKey);
@@ -170,6 +157,9 @@ export default function App() {
         
         const rawDays = localStorage.getItem(daysKey);
         if (rawDays) loadedDays = JSON.parse(rawDays);
+
+        const rawLogs = localStorage.getItem(logsKey);
+        if (rawLogs) loadedLogs = JSON.parse(rawLogs);
       } catch {}
     }
 
@@ -177,6 +167,7 @@ export default function App() {
     setDaysCompleted(loadedDays);
     setChallengeStartDate(loadedStart);
     setChallengeTitle(loadedTitle);
+    setDailyLogs(loadedLogs);
 
     // 2. Fetch from Firestore if logged in and configured (online sync)
     if (userId !== "guest" && db) {
@@ -188,6 +179,7 @@ export default function App() {
           if (data.daysCompleted) setDaysCompleted(data.daysCompleted);
           if (data.challengeStartDate) setChallengeStartDate(data.challengeStartDate);
           if (data.challengeTitle) setChallengeTitle(data.challengeTitle);
+          if (data.dailyLogs) setDailyLogs(data.dailyLogs);
 
           // Update local storage so it remains in sync offline
           try {
@@ -195,6 +187,7 @@ export default function App() {
             if (data.daysCompleted) localStorage.setItem(daysKey, obfuscate(JSON.stringify(data.daysCompleted)));
             if (data.challengeStartDate) localStorage.setItem(startKey, obfuscate(JSON.stringify(data.challengeStartDate)));
             if (data.challengeTitle) localStorage.setItem(titleKey, obfuscate(JSON.stringify(data.challengeTitle)));
+            if (data.dailyLogs) localStorage.setItem(logsKey, obfuscate(JSON.stringify(data.dailyLogs)));
           } catch {}
         } else {
           // Upload local progress on first registration
@@ -203,6 +196,7 @@ export default function App() {
             daysCompleted: loadedDays,
             challengeStartDate: loadedStart,
             challengeTitle: loadedTitle,
+            dailyLogs: loadedLogs,
             updatedAt: Date.now()
           }).catch(() => {});
         }
@@ -269,6 +263,19 @@ export default function App() {
       setDoc(docRef, { challengeTitle, updatedAt: Date.now() }, { merge: true }).catch(() => {});
     }
   }, [challengeTitle, userId, initialLoaded]);
+
+  useEffect(() => {
+    if (!userId || !initialLoaded) return;
+    const logsKey = `tawazon_${userId}_daily_logs`;
+    try {
+      localStorage.setItem(logsKey, obfuscate(JSON.stringify(dailyLogs)));
+    } catch {}
+
+    if (userId !== "guest" && db) {
+      const docRef = doc(db, "users", userId);
+      setDoc(docRef, { dailyLogs, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+    }
+  }, [dailyLogs, userId, initialLoaded]);
 
   /* const getInitialPhase = (dayIdx: number) => {
     if (dayIdx < 30) return 1;
@@ -966,6 +973,12 @@ export default function App() {
                     </form>
                   </div>
                 </div>
+
+                {/* Garden View (حديقتك الافتراضية) */}
+                <GardenView 
+                  completedCount={habits.filter(h => h.completed).length} 
+                  totalCount={habits.length} 
+                />
               </div>
 
               {/* Right Column: Habit Tracker Calendar Grid */}
