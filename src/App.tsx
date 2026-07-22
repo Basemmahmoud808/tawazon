@@ -495,11 +495,65 @@ export default function App() {
   const [isSendingMsg, setIsSendingMsg] = useState(false);
   const [msgSentSuccess, setMsgSentSuccess] = useState(false);
 
+  const handleDirectWhatsApp = () => {
+    if (!developerMsgText.trim()) {
+      alert("الرجاء كتابة رسالتك أولاً.");
+      return;
+    }
+    const categoryNames: Record<string, string> = {
+      color_theme: "تعديل ألوان وتصميم",
+      add_feature: "طلب إضافة ميزة",
+      report_bug: "الإبلاغ عن مشكلة",
+      other: "اقتراح عام",
+    };
+    const categoryText = categoryNames[developerMsgType] || "اقتراح";
+    const contactText = developerContact.trim() ? `\nوسيلة التواصل: ${developerContact.trim()}` : "";
+    const fullMessage = `السلام عليكم ورحمة الله،\nمنصة توازن 🌿\nالموضوع: ${categoryText}\nمن: ${userName || "مستخدم"}${contactText}\n\nالرسالة:\n${developerMsgText.trim()}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullMessage)}`, "_blank");
+  };
+
+  const handleDirectEmail = () => {
+    if (!developerMsgText.trim()) {
+      alert("الرجاء كتابة رسالتك أولاً.");
+      return;
+    }
+    const categoryNames: Record<string, string> = {
+      color_theme: "تعديل ألوان وتصميم",
+      add_feature: "طلب إضافة ميزة",
+      report_bug: "الإبلاغ عن مشكلة",
+      other: "اقتراح عام",
+    };
+    const categoryText = categoryNames[developerMsgType] || "اقتراح";
+    const contactText = developerContact.trim() ? `\nوسيلة التواصل: ${developerContact.trim()}` : "";
+    const subject = `رسالة واقتراح جديد - منصة توازن (${categoryText})`;
+    const body = `السلام عليكم ورحمة الله،\nمنصة توازن 🌿\nالموضوع: ${categoryText}\nمن: ${userName || "مستخدم"}${contactText}\n\nالرسالة:\n${developerMsgText.trim()}`;
+    window.open(`mailto:basemmahmoud808@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_blank");
+  };
+
   const handleSubmitDeveloperMsg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!developerMsgText.trim()) return;
     setIsSendingMsg(true);
     try {
+      // 1. Direct real-time email dispatch via FormSubmit API to basemmahmoud808@gmail.com
+      try {
+        await fetch("https://formsubmit.co/ajax/basemmahmoud808@gmail.com", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            name: userName || "مستخدم توازن",
+            category: developerMsgType,
+            contact: developerContact.trim() || "غير محدد",
+            message: developerMsgText.trim(),
+            date: new Date().toLocaleString("ar-EG")
+          })
+        });
+      } catch { /* fallback to db */ }
+
+      // 2. Firestore log if available
       if (db) {
         await addDoc(collection(db, "developer_messages"), {
           uid: userId,
@@ -524,6 +578,7 @@ export default function App() {
         });
         localStorage.setItem("tawazon_offline_feedback", JSON.stringify(existing));
       }
+
       setMsgSentSuccess(true);
       setDeveloperMsgText("");
       setDeveloperContact("");
@@ -1322,8 +1377,55 @@ export default function App() {
                     cursor: isSendingMsg ? "not-allowed" : "pointer"
                   }}
                 >
-                  {isSendingMsg ? "جاري الإرسال..." : "إرسال الرسالة للمطور"}
+                  {isSendingMsg ? "جاري الإرسال..." : "إرسال الرسالة للمطور (مباشر)"}
                 </button>
+
+                {/* Direct Instant Contact Options */}
+                <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
+                  <button
+                    type="button"
+                    onClick={handleDirectWhatsApp}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      borderRadius: "10px",
+                      backgroundColor: "#25D366",
+                      color: "#ffffff",
+                      border: "none",
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    💬 إرسال عبر واتساب
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDirectEmail}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      borderRadius: "10px",
+                      backgroundColor: "#ea4335",
+                      color: "#ffffff",
+                      border: "none",
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    ✉️ إرسال عبر الإيميل
+                  </button>
+                </div>
               </form>
             )}
           </div>
