@@ -3,7 +3,6 @@ import { useLocalStorage, obfuscate, deobfuscate } from "./hooks/useLocalStorage
 import { useAdminGuard } from "./hooks/useAdminGuard";
 import type { Habit } from "./components/HabitTracker";
 import { Login } from "./components/Login";
-import { GardenView } from "./components/GardenView";
 
 // Archive & lazy imports
 import type { DailyLog } from "./components/HistoryArchive";
@@ -950,12 +949,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Garden View (حديقتك الافتراضية) */}
-                <GardenView 
-                  completedCount={habits.filter(h => h.completed).length} 
-                  totalCount={habits.length} 
-                  theme={theme}
-                />
+
               </div>
 
               {/* Right Column: Habit Tracker Calendar Grid */}

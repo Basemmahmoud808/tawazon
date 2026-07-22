@@ -76,74 +76,6 @@ const MoodIcon: React.FC<{ type?: "energetic" | "happy" | "calm" | "tired" | "an
   }
 };
 
-// SVG plant growth stage icon
-const GardenPlantIcon: React.FC<{ percent: number }> = ({ percent }) => {
-  return (
-    <svg width="44" height="44" viewBox="0 0 100 100" style={{ overflow: "visible" }}>
-      <defs>
-        <radialGradient id="miniAmbientGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="var(--color-sage-light)" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="transparent" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="miniStemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="var(--color-sage)" />
-          <stop offset="100%" stopColor="#55755b" />
-        </linearGradient>
-        <linearGradient id="miniPotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ebd6cc" />
-          <stop offset="100%" stopColor="var(--color-terracotta)" />
-        </linearGradient>
-      </defs>
-
-      <circle cx="50" cy="55" r="35" fill="url(#miniAmbientGlow)" />
-      <ellipse cx="50" cy="85" rx="20" ry="4" fill="var(--bg-accent)" opacity="0.4" />
-      <path d="M 32 70 Q 50 67 68 70 L 63 88 Q 50 92 37 88 Z" fill="url(#miniPotGrad)" />
-      <path d="M 30 67 Q 50 64 70 67 L 70 70 Q 50 67 30 70 Z" fill="#dfb39d" />
-      <ellipse cx="50" cy="68" rx="19" ry="2.2" fill="#694b37" />
-
-      {percent > 0 && (
-        <path d="M 50 68 C 49 53, 47 43, 50 32" fill="none" stroke="url(#miniStemGrad)" strokeWidth="3.5" strokeLinecap="round" />
-      )}
-
-      {percent >= 25 && (
-        <>
-          <path d="M 49 50 C 37 47, 34 40, 49 45 Z" fill="var(--color-sage)" />
-          <path d="M 49 50 C 37 51, 34 44, 49 45 Z" fill="#4b6652" opacity="0.3" />
-          <path d="M 51 45 C 63 42, 66 35, 51 40 Z" fill="var(--color-sage)" />
-          <path d="M 51 45 C 63 46, 66 39, 51 40 Z" fill="#4b6652" opacity="0.3" />
-        </>
-      )}
-
-      {percent >= 60 && (
-        <>
-          <path d="M 49 39 C 39 36, 36 30, 49 34 Z" fill="var(--color-sage)" />
-          <path d="M 51 35 C 61 32, 64 26, 51 30 Z" fill="var(--color-sage)" />
-        </>
-      )}
-
-      {percent === 100 ? (
-        <g>
-          <line x1="50" y1="32" x2="50" y2="28" stroke="var(--color-sage)" strokeWidth="2" />
-          <g transform="translate(0, 3)">
-            <path d="M 50 25 C 40 20, 37 10, 46 7 Z" fill="var(--color-terracotta)" opacity="0.8" />
-            <path d="M 50 25 C 60 20, 63 10, 54 7 Z" fill="var(--color-terracotta)" opacity="0.8" />
-            <path d="M 50 25 C 46 17, 46 12, 50 9 C 54 12, 54 17, 50 25 Z" fill="var(--color-sand)" />
-            <circle cx="50" cy="16" r="2.5" fill="#ffffff" />
-          </g>
-        </g>
-      ) : (
-        percent >= 75 && (
-          <path d="M 50 32 C 46 26, 46 20, 50 17 C 54 20, 54 26, 50 32 Z" fill="var(--color-sand)" />
-        )
-      )}
-
-      {percent === 0 && (
-        <circle cx="50" cy="66" r="1.5" fill="var(--color-sand)" />
-      )}
-    </svg>
-  );
-};
-
 export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
   const getMoodLabel = (type?: DailyLog["mood"]) => {
     if (!type) return "غير مسجل";
@@ -167,36 +99,6 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
       case "anxious": return "var(--color-terracotta)";
       default: return "var(--text-muted)";
     }
-  };
-
-  // Generate last 7 days for the plant garden shelf
-  const getLast7Days = () => {
-    const days = [];
-    const arabicDays = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      
-      const rawDate = date.toDateString();
-      const dayNum = date.getDate();
-      const dayName = arabicDays[date.getDay()];
-      
-      // Find matching log
-      const log = logs.find((l) => l.rawDate === rawDate);
-      const pct = log && log.totalHabits > 0 ? (log.completedHabits.length / log.totalHabits) * 100 : 0;
-      const completed = log ? log.completedHabits.length : 0;
-      const total = log ? log.totalHabits : 0;
-
-      days.push({
-        dayName,
-        dayNum,
-        pct,
-        completed,
-        total,
-      });
-    }
-    return days;
   };
 
   // Generate 12-week Heatmap Grid data (84 days)
@@ -223,7 +125,6 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
     return data;
   };
 
-  const plantDays = getLast7Days();
   const heatmapDays = getHeatmapData();
 
   // Mood statistics calculation
@@ -238,33 +139,6 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
   return (
     <div style={archiveLayoutWrapperStyle}>
       
-      {/* ── Visual Plant Shelf (7 Days) ── */}
-      <div className="card" style={gardenCardStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-          <div>
-            <h3 style={statsTitleStyle}>رف النباتات الأسبوعي</h3>
-            <p style={{ margin: 0, fontSize: "11px", color: "var(--text-muted)" }}>تطور حديقتك الصغيرة على مدار الـ 7 أيام الماضية</p>
-          </div>
-        </div>
-        
-        <div className="garden-grid-scroll" style={{ width: "100%" }}>
-          <div style={{ ...gardenGridStyle, minWidth: "550px" }}>
-            {plantDays.map((d, index) => (
-              <div key={index} style={potContainerStyle}>
-                <span style={potDayNameStyle}>{d.dayName}</span>
-                <div style={potVisualWrapperStyle}>
-                  <GardenPlantIcon percent={d.pct} />
-                </div>
-                <span style={potDateLabelStyle}>{d.dayNum}</span>
-                <span style={{ ...potStatStyle, color: d.pct === 100 ? BRAND_COLOR : "var(--text-muted)" }}>
-                  {d.total > 0 ? `${d.completed}/${d.total}` : "0/0"}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div style={{ ...shelfLineStyle, minWidth: "550px" }} />
-        </div>
-      </div>
 
       {/* ── GitHub-Style Habit Heatmap (12 Weeks) ── */}
       <div className="card" style={{ ...gardenCardStyle, padding: "20px" }}>
@@ -461,72 +335,6 @@ const gardenCardStyle: React.CSSProperties = {
   padding: "20px",
   borderRadius: "16px",
   boxShadow: "var(--shadow-card)",
-};
-
-const gardenGridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(7, 1fr)",
-  gap: "8px",
-  justifyContent: "center",
-  alignItems: "center",
-  width: "100%",
-  padding: "8px 0",
-};
-
-const potContainerStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "10px 4px",
-  backgroundColor: "var(--bg-primary)",
-  borderRadius: "10px",
-  border: "1px solid var(--bg-accent)",
-  position: "relative",
-  zIndex: 2,
-};
-
-const potDayNameStyle: React.CSSProperties = {
-  fontSize: "11px",
-  fontWeight: "bold",
-  color: "var(--text-muted)",
-  marginBottom: "4px",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  maxWidth: "100%",
-};
-
-const potVisualWrapperStyle: React.CSSProperties = {
-  height: "52px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const potDateLabelStyle: React.CSSProperties = {
-  fontSize: "12px",
-  fontWeight: "bold",
-  color: "var(--text-main)",
-  marginTop: "2px",
-};
-
-const potStatStyle: React.CSSProperties = {
-  fontSize: "10px",
-  fontWeight: "600",
-  marginTop: "2px",
-};
-
-const shelfLineStyle: React.CSSProperties = {
-  width: "100%",
-  height: "8px",
-  backgroundColor: "var(--color-terracotta)",
-  borderRadius: "4px",
-  marginTop: "-5px",
-  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)",
-  borderBottom: "3px solid #b58870",
-  position: "relative",
-  zIndex: 1,
 };
 
 const statsCardStyle: React.CSSProperties = {
