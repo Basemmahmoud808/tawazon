@@ -11,7 +11,22 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
   const isDark = theme === "dark";
 
   return (
-    <div className="card garden-card" style={gardenCardStyle}>
+    <div 
+      className="card garden-card" 
+      style={{
+        ...gardenCardStyle,
+        background: isDark 
+          ? "linear-gradient(135deg, #091e15 0%, #022c22 100%)" 
+          : "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+        border: isDark 
+          ? "1px solid rgba(16,185,129,0.22)" 
+          : "1px solid rgba(16,185,129,0.12)",
+        boxShadow: isDark 
+          ? "0 10px 30px rgba(0,0,0,0.5)" 
+          : "0 10px 30px rgba(16,185,129,0.06)",
+        transition: "background 0.5s ease, border-color 0.5s ease"
+      }}
+    >
       <h3 style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--color-sage)" }}>
           <path d="M12 10a6 6 0 0 0-6-6H3v3a6 6 0 0 0 6 6h3Z" />
@@ -135,12 +150,16 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
           <ellipse cx="100" cy="178" rx="28" ry="5" fill="var(--bg-accent)" opacity="0.45" />
           {/* Hexagonal/Minimalist Concrete Pot */}
           <path d="M 72 153 L 128 153 L 122 181 L 78 181 Z" fill="url(#potGradient)" filter="url(#cardShadow)" />
+          {/* Faceted Shading for 3D geometric concrete look */}
+          <path d="M 72 153 L 100 153 L 100 181 L 78 181 Z" fill="rgba(255,255,255,0.06)" />
+          <path d="M 100 153 L 128 153 L 122 181 L 100 181 Z" fill="rgba(0,0,0,0.18)" />
+          
           {/* Concrete Pot Top Rim */}
           <path d="M 70 148 L 130 148 L 130 153 L 70 153 Z" fill={isDark ? "#3f3f46" : "#d4d4d8"} />
           <ellipse cx="100" cy="149" rx="27" ry="2.5" fill="#3f2d21" />
 
           {/* Gold Accent Band around the concrete pot for a premium touch */}
-          <path d="M 74 163 L 126 163 L 124 167 L 76 167 Z" fill="#d97706" opacity="0.8" style={{ filter: "drop-shadow(0 0 2px rgba(217,119,6,0.3))" }} />
+          <path d="M 74 163 L 126 163 L 124 167 L 76 167 Z" fill="#f59e0b" style={{ filter: "drop-shadow(0 0 4px rgba(245,158,11,0.5))" }} />
 
           {/* ─── Plant growth stem structure (wraps in sway animation) ─── */}
           <g className="stem-sway">
@@ -170,11 +189,15 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
                 <g className="leaf-left-sway" style={{ transformOrigin: "84px 116px" }}>
                   <path d="M 84 116 C 60 112, 54 96, 84 106 Z" fill="url(#leafGradient)" />
                   <path d="M 84 116 C 60 120, 54 104, 84 106 Z" fill="#081c15" opacity="0.25" />
+                  {/* Leaf Vein */}
+                  <path d="M 84 116 Q 73 110 66 107" fill="none" stroke="#a7f3d0" strokeWidth="1" opacity="0.65" />
                 </g>
                 {/* Right Leaf (Dual Shading + Sway) */}
                 <g className="leaf-right-sway" style={{ transformOrigin: "114px 107px" }}>
                   <path d="M 114 107 C 138 103, 144 87, 114 97 Z" fill="url(#leafGradient)" />
                   <path d="M 114 107 C 138 111, 144 95, 114 97 Z" fill="#081c15" opacity="0.25" />
+                  {/* Leaf Vein */}
+                  <path d="M 114 107 Q 125 101 132 98" fill="none" stroke="#a7f3d0" strokeWidth="1" opacity="0.65" />
                 </g>
               </g>
             )}
@@ -190,11 +213,15 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
                 <g className="leaf-left-sway" style={{ transformOrigin: "84px 71px" }}>
                   <path d="M 84 71 C 63 67, 57 54, 84 63 Z" fill="url(#leafGradient)" />
                   <path d="M 84 71 C 63 75, 57 62, 84 63 Z" fill="#081c15" opacity="0.25" />
+                  {/* Leaf Vein */}
+                  <path d="M 84 71 Q 71 65 65 62" fill="none" stroke="#a7f3d0" strokeWidth="1" opacity="0.65" />
                 </g>
                 {/* Upper Right Leaf */}
                 <g className="leaf-right-sway" style={{ transformOrigin: "114px 65px" }}>
                   <path d="M 114 65 C 135 61, 141 48, 114 57 Z" fill="url(#leafGradient)" />
                   <path d="M 114 65 C 135 65, 141 52, 114 57 Z" fill="#081c15" opacity="0.25" />
+                  {/* Leaf Vein */}
+                  <path d="M 114 65 Q 127 59 133 56" fill="none" stroke="#a7f3d0" strokeWidth="1" opacity="0.65" />
                 </g>
               </g>
             )}
