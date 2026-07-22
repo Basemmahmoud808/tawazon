@@ -1656,6 +1656,8 @@ const duaModalContentStyle: React.CSSProperties = {
   padding: "32px 24px",
   maxWidth: "380px",
   width: "100%",
+  maxHeight: "90vh",
+  overflowY: "auto",
   boxShadow: "0 20px 40px rgba(0,0,0,0.18)",
   border: "1.5px solid var(--bg-accent)",
   display: "flex",
