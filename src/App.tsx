@@ -978,6 +978,7 @@ export default function App() {
                 <GardenView 
                   completedCount={habits.filter(h => h.completed).length} 
                   totalCount={habits.length} 
+                  theme={theme}
                 />
               </div>
 
