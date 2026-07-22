@@ -26,7 +26,16 @@ const WIRD_ITEMS: Omit<Dhikr, "remaining">[] = [
   { id: "w6", count: 100, text: "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ", source: "الصلاة على النبي ﷺ مئة مرة" },
 ];
 
-// Surah Starting Page Numbers in the standard Madinah Mushaf (15 lines per page)
+function normalizeArabic(text: string): string {
+  return text
+    .trim()
+    .replace(/[\u064B-\u0652]/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي");
+}
+
+// Surah Starting Page Numbers in the standard Madinah Mushaf (604 pages)
 const SURAHS_STARTING_PAGES: Record<number, number> = {
   1: 1, 2: 2, 3: 50, 4: 77, 5: 106, 6: 128, 7: 151, 8: 177, 9: 187, 10: 208,
   11: 221, 12: 235, 13: 249, 14: 255, 15: 262, 16: 267, 17: 282, 18: 293, 19: 305, 20: 312,
@@ -34,12 +43,12 @@ const SURAHS_STARTING_PAGES: Record<number, number> = {
   31: 411, 32: 415, 33: 418, 34: 428, 35: 434, 36: 440, 37: 446, 38: 453, 39: 458, 40: 467,
   41: 477, 42: 483, 43: 489, 44: 496, 45: 499, 46: 502, 47: 507, 48: 511, 49: 515, 50: 518,
   51: 520, 52: 523, 53: 526, 54: 528, 55: 531, 56: 534, 57: 537, 58: 542, 59: 545, 60: 549,
-  61: 551, 62: 553, 63: 554, 64: 556, 65: 558, 66: 560, 67: 562, 68: 564, 69: 568, 70: 570,
-  71: 572, 72: 574, 73: 576, 74: 578, 75: 580, 76: 582, 77: 585, 78: 586, 79: 588, 80: 590,
-  81: 593, 82: 594, 83: 595, 84: 597, 85: 599, 86: 600, 87: 601, 88: 602, 89: 603, 90: 604,
-  91: 605, 92: 605, 93: 606, 94: 606, 95: 607, 96: 607, 97: 608, 98: 608, 99: 609, 100: 609,
-  101: 610, 102: 610, 103: 611, 104: 611, 105: 611, 106: 612, 107: 612, 108: 612, 109: 613, 110: 613,
-  111: 613, 112: 614, 113: 614, 114: 614
+  61: 551, 62: 553, 63: 554, 64: 556, 65: 558, 66: 560, 67: 562, 68: 564, 69: 566, 70: 568,
+  71: 570, 72: 572, 73: 574, 74: 575, 75: 577, 76: 578, 77: 580, 78: 582, 79: 586, 80: 588,
+  81: 589, 82: 590, 83: 591, 84: 593, 85: 595, 86: 597, 87: 598, 88: 599, 89: 599, 90: 601,
+  91: 601, 92: 602, 93: 602, 94: 603, 95: 603, 96: 603, 97: 604, 98: 604, 99: 604, 100: 604,
+  101: 604, 102: 604, 103: 604, 104: 604, 105: 604, 106: 604, 107: 604, 108: 604, 109: 604, 110: 604,
+  111: 604, 112: 604, 113: 604, 114: 604
 };
 
 const SURAHS_LIST = [
@@ -270,10 +279,13 @@ const QuranTracker: React.FC = () => {
   const done = quran.done >= quran.goal;
   const unitLabel = quran.unit === "pages" ? "صفحة" : "جزء";
 
-  // Filter Surahs
-  const filteredSurahs = SURAHS_LIST.filter(s =>
-    s.name.includes(searchQuery) || s.number.toString() === searchQuery
-  );
+  // Filter Surahs with normalized Arabic text matching
+  const normalizedQuery = normalizeArabic(searchQuery);
+  const filteredSurahs = SURAHS_LIST.filter(s => {
+    if (!searchQuery.trim()) return true;
+    const normalizedName = normalizeArabic(s.name);
+    return normalizedName.includes(normalizedQuery) || s.number.toString() === searchQuery.trim();
+  });
 
   const turnPageNext = () => {
     if (activePage < 604) {
@@ -474,20 +486,30 @@ const QuranTracker: React.FC = () => {
                 cursor: "pointer"
               }}
             >
-              {SURAHS_LIST.map((s) => (
+              {(searchQuery.trim() ? filteredSurahs : SURAHS_LIST).map((s) => (
                 <option key={s.number} value={s.number}>
-                  سورة {s.name} (تبدأ من صفحة {SURAHS_STARTING_PAGES[s.number]})
+                  سورة {s.name} (صفحة {SURAHS_STARTING_PAGES[s.number]})
                 </option>
               ))}
             </select>
           </div>
 
-          <div style={{ width: "150px" }}>
+          <div style={{ flex: 1, minWidth: "160px" }}>
             <input
               type="text"
-              placeholder="ابحث عن سورة..."
+              placeholder="🔍 ابحث بالاسم أو الرقم..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                // If query matches exact number or single surah name, auto select
+                const matched = SURAHS_LIST.find(s =>
+                  s.number.toString() === val.trim() || normalizeArabic(s.name) === normalizeArabic(val)
+                );
+                if (matched) {
+                  handleSurahSelect(matched.number);
+                }
+              }}
               style={{
                 width: "100%",
                 padding: "10px 14px",
@@ -495,33 +517,39 @@ const QuranTracker: React.FC = () => {
                 border: "1.5px solid var(--bg-accent)",
                 backgroundColor: "var(--bg-card)",
                 color: "var(--text-main)",
-                fontSize: "12px",
+                fontSize: "13px",
+                fontWeight: "600",
                 outline: "none",
               }}
             />
           </div>
         </div>
 
-        {searchQuery && (
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", maxHeight: "100px", overflowY: "auto", padding: "8px", border: "1px dashed var(--bg-accent)", borderRadius: "10px" }}>
-            {filteredSurahs.map(s => (
-              <button
-                key={s.number}
-                onClick={() => { handleSurahSelect(s.number); setSearchQuery(""); }}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "20px",
-                  backgroundColor: "var(--bg-accent)",
-                  border: "none",
-                  fontSize: "11px",
-                  fontWeight: "bold",
-                  color: "var(--text-main)",
-                  cursor: "pointer"
-                }}
-              >
-                {s.name}
-              </button>
-            ))}
+        {searchQuery.trim() && (
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", maxHeight: "120px", overflowY: "auto", padding: "10px", backgroundColor: "var(--bg-primary)", border: "1px solid var(--bg-accent)", borderRadius: "12px" }}>
+            {filteredSurahs.length === 0 ? (
+              <span style={{ fontSize: "12px", color: "var(--text-muted)", padding: "4px" }}>لا توجد سورة تطابق بحثك</span>
+            ) : (
+              filteredSurahs.map(s => (
+                <button
+                  key={s.number}
+                  onClick={() => { handleSurahSelect(s.number); setSearchQuery(""); }}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "20px",
+                    backgroundColor: activeSurahNum === s.number ? QURAN_COLOR : "var(--bg-accent)",
+                    color: activeSurahNum === s.number ? "white" : "var(--text-main)",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  سورة {s.name} (صفحة {SURAHS_STARTING_PAGES[s.number]})
+                </button>
+              ))
+            )}
           </div>
         )}
 
