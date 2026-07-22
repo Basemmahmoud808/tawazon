@@ -449,7 +449,7 @@ const QuranTracker: React.FC = () => {
             border: "1px solid #d4ccb6"
           }}>
             <img
-              src={`https://raw.githubusercontent.com/GovarJabbar/Quran-PNG/master/${activePage.toString().padStart(3, '0')}.png`}
+              src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${activePage.toString().padStart(3, '0')}.png`}
               alt={`مصحف المدينة صفحة ${activePage}`}
               style={{
                 width: "100%",
@@ -459,6 +459,19 @@ const QuranTracker: React.FC = () => {
               }}
               loading="eager"
             />
+          </div>
+
+          {/* Hidden Image Preloader for instant page turning */}
+          <div style={{ display: "none" }}>
+            {activePage < 604 && (
+              <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 1).toString().padStart(3, '0')}.png`} />
+            )}
+            {activePage < 603 && (
+              <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 2).toString().padStart(3, '0')}.png`} />
+            )}
+            {activePage > 1 && (
+              <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage - 1).toString().padStart(3, '0')}.png`} />
+            )}
           </div>
 
           {/* Navigation Controls Bar */}
