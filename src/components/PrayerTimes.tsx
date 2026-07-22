@@ -54,6 +54,7 @@ const GOLD_COLOR  = "#c8963e";
 // ─── Main Prayer Times Component ──────────────────────────────────────────────
 export const PrayerTimes: React.FC = () => {
   const [prayers, setPrayers] = useState<PrayerTime[]>([]);
+  const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [now, setNow] = useState(new Date());
@@ -350,11 +351,17 @@ export const PrayerTimes: React.FC = () => {
                 return (
                   <div
                     key={p.name}
+                    onClick={() => {
+                      if (!isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha")) {
+                        setExpandedPrayer(expandedPrayer === p.name ? null : p.name);
+                      }
+                    }}
                     style={{
                       ...prayerRow,
                       flexDirection: "column",
                       alignItems: "stretch",
                       gap: "10px",
+                      cursor: !isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") ? "pointer" : "default",
                       ...(current ? currentRow : {}),
                       ...(isSunrise ? sunriseRow : {}),
                       opacity: isSunrise ? 0.65 : 1,
@@ -366,9 +373,14 @@ export const PrayerTimes: React.FC = () => {
                           {renderPrayerIcon(p.name, current)}
                         </span>
                         <div>
-                          <p style={{ ...prayerName, color: current ? "var(--brand)" : "var(--text-main)" }}>
+                          <p style={{ ...prayerName, color: current ? "var(--brand)" : "var(--text-main)", display: "flex", alignItems: "center", gap: "6px" }}>
                             {p.arabicName}
                             {current && <span style={currentBadge}>الآن</span>}
+                            {!isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") && (
+                              <span style={{ fontSize: "10px", color: "var(--text-muted)", marginRight: "4px" }}>
+                                {expandedPrayer === p.name ? "▲ سنن" : "▼ سنن"}
+                              </span>
+                            )}
                           </p>
                           <p style={{ ...prayerTime, color: past && !current ? "var(--text-muted)" : "var(--text-main)" }}>
                             {p.time}
@@ -378,7 +390,10 @@ export const PrayerTimes: React.FC = () => {
 
                       {!isSunrise && (
                         <button
-                          onClick={() => toggleDone(idx)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDone(idx);
+                          }}
                           style={{
                             ...checkBtn,
                             backgroundColor: p.done ? BRAND_COLOR : "transparent",
@@ -396,8 +411,11 @@ export const PrayerTimes: React.FC = () => {
                     </div>
 
                     {/* Sunan Rawatib Sub-row */}
-                    {!isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") && (
-                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", padding: "6px 8px", borderTop: "1px solid var(--bg-accent)", marginTop: "2px" }}>
+                    {expandedPrayer === p.name && !isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") && (
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ display: "flex", gap: "8px", flexWrap: "wrap", padding: "6px 8px", borderTop: "1px solid var(--bg-accent)", marginTop: "2px" }}
+                      >
                         {p.name === "Fajr" && (
                           <button
                             onClick={() => toggleSunnah("Fajr_pre")}
