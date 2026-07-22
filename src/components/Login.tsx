@@ -74,7 +74,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   // Complete OAuth logins after a redirect flow.
   useEffect(() => {
     if (!auth) {
-      setErrorMsg(firebaseUnavailableMessage);
       return;
     }
     getRedirectResult(auth)
@@ -122,7 +121,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
     e.preventDefault();
     setErrorMsg("");
     if (!auth) {
-      setErrorMsg(firebaseUnavailableMessage);
+      if (!email && !emailName) {
+        setErrorMsg("الرجاء إدخال الاسم أو البريد الإلكتروني للتسجيل المحلي.");
+        return;
+      }
+      const displayName = emailName.trim() || (email ? email.split("@")[0] : "مستخدم توازن");
+      onLoginSuccess(displayName, "email");
       return;
     }
     if (!email || !password) {
@@ -181,7 +185,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
     e.preventDefault();
     setErrorMsg("");
     if (!auth) {
-      setErrorMsg(firebaseUnavailableMessage);
+      const cleanPhone = phone ? `${countryCode}${phone}` : "الهاتف";
+      onLoginSuccess(`مستخدم (${cleanPhone})`, "phone");
       return;
     }
     if (!phone || phone.length < 9) {
@@ -257,7 +262,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const handleOAuthLogin = async (providerType: "google" | "facebook") => {
     setErrorMsg("");
     if (!auth) {
-      setErrorMsg(firebaseUnavailableMessage);
+      onLoginSuccess(providerType === "google" ? "مستخدم Google" : "مستخدم فيسبوك", providerType);
       return;
     }
     setLoading(true);

@@ -41,7 +41,61 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
     return data;
   };
 
+  // Helper to fetch prayer history data ONLY when user starts saving/marking prayers
+  const getPrayerHistoryData = () => {
+    let history: Record<string, any> = {};
+    try {
+      const stored = localStorage.getItem("tawazon_prayers_history");
+      if (stored) history = JSON.parse(stored);
+    } catch {}
+
+    // Include today's saved/marked prayers if any exist
+    try {
+      const todayData = localStorage.getItem("tawazon_prayers");
+      if (todayData) {
+        const parsed = JSON.parse(todayData);
+        if (parsed.date && parsed.prayers && parsed.prayers.some((p: any) => p.done)) {
+          if (!history[parsed.date]) {
+            history[parsed.date] = { prayers: parsed.prayers };
+          } else {
+            history[parsed.date].prayers = parsed.prayers;
+          }
+        }
+      }
+    } catch {}
+
+    const list = [];
+    const historyDates = Object.keys(history);
+    for (const rawDate of historyDates) {
+      const entry = history[rawDate];
+      if (!entry || !entry.prayers) continue;
+
+      const d = new Date(rawDate);
+      const isToday = rawDate === new Date().toDateString();
+      const dayName = isNaN(d.getTime()) ? "" : d.toLocaleDateString("ar-EG", { weekday: "long" });
+      const fullDate = isNaN(d.getTime()) ? rawDate : d.toLocaleDateString("ar-EG", { month: "short", day: "numeric", year: "numeric" });
+
+      const filtered = entry.prayers.filter((p: any) => p.arabicName !== "الشروق");
+      const completedCount = filtered.filter((p: any) => p.done).length;
+
+      list.push({
+        rawDate,
+        dayName,
+        fullDate,
+        isToday,
+        prayers: filtered,
+        completedCount,
+        timestamp: isNaN(d.getTime()) ? 0 : d.getTime(),
+      });
+    }
+
+    // Sort descending (newest dates first)
+    list.sort((a, b) => b.timestamp - a.timestamp);
+    return list;
+  };
+
   const heatmapDays = getHeatmapData();
+  const prayerHistoryDays = getPrayerHistoryData();
 
   return (
     <div style={archiveLayoutWrapperStyle}>
@@ -94,6 +148,98 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
           <div style={{ ...heatmapSquare, backgroundColor: BRAND_COLOR }} />
           <span style={legendText}>التزام كامل</span>
         </div>
+      </div>
+
+      {/* ── Prayer Commitment Chart Card (مخطط الالتزام بالصلاة بالأيام والتاريخ) ── */}
+      <div className="card" style={{ ...gardenCardStyle, padding: "20px", marginTop: "20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+          <div>
+            <h3 style={statsTitleStyle}>🕌 مخطط الالتزام بالصلاة (بالأيام والتاريخ)</h3>
+            <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--text-muted)" }}>
+              جدول متابعة أداء الصلوات الخمس بالأيام والتواريخ
+            </p>
+          </div>
+        </div>
+
+        {prayerHistoryDays.length === 0 ? (
+          <div style={{
+            textAlign: "center",
+            padding: "24px 16px",
+            backgroundColor: "var(--bg-primary)",
+            borderRadius: "14px",
+            border: "1px dashed var(--bg-accent)"
+          }}>
+            <span style={{ fontSize: "32px" }}>🕌</span>
+            <p style={{ margin: "8px 0 4px", fontSize: "13px", fontWeight: "700", color: "var(--text-main)" }}>
+              لا توجد سجلات صلاة محفوظة بعد
+            </p>
+            <p style={{ margin: 0, fontSize: "11px", color: "var(--text-muted)", lineHeight: "1.6" }}>
+              انتقل إلى قسم الصلوات وقم بتحديد وحفظ صلوات اليوم ليبدأ مخطط التزامك بالظهور هنا بالأيام والتواريخ.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {prayerHistoryDays.map((day, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "12px 14px",
+                  borderRadius: "14px",
+                  backgroundColor: day.isToday ? "var(--brand-xlight, #f0faf5)" : "var(--bg-primary)",
+                  border: day.isToday ? "1px solid var(--brand)" : "1px solid var(--bg-accent)",
+                  flexWrap: "wrap",
+                  gap: "8px"
+                }}
+              >
+                {/* Day & Date info */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: "800", color: "var(--brand)" }}>
+                    {day.dayName}
+                  </span>
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                    ({day.fullDate})
+                  </span>
+                  {day.isToday && (
+                    <span style={{ fontSize: "10px", backgroundColor: BRAND_COLOR, color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold" }}>
+                      اليوم
+                    </span>
+                  )}
+                </div>
+
+                {/* 5 Prayers checklist badges */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  {day.prayers.map((p: any, pIdx: number) => (
+                    <div
+                      key={pIdx}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "4px 8px",
+                        borderRadius: "8px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        backgroundColor: p.done ? "var(--brand-light, #e6f4ed)" : "var(--bg-accent)",
+                        color: p.done ? BRAND_COLOR : "var(--text-muted)",
+                        border: p.done ? "1px solid rgba(26,107,74,0.2)" : "1px solid transparent"
+                      }}
+                    >
+                      <span>{p.done ? "✓" : "○"}</span>
+                      <span>{p.arabicName}</span>
+                    </div>
+                  ))}
+
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: day.completedCount === 5 ? BRAND_COLOR : "var(--text-main)", marginRight: "6px" }}>
+                    {day.completedCount}/5
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Detailed Timeline Logs ── */}

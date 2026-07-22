@@ -89,6 +89,75 @@ const BOOKMARK_KEY = "tawazon_quran_page_bookmark_v1";
 const WIRD_COLOR  = "#115B3D";
 const QURAN_COLOR = "#C29028";
 
+const QURAN_WORDS_DICTIONARY: Record<number, { word: string; meaning: string }[]> = {
+  582: [
+    { word: "النبأ العظيم", meaning: "الخبر الهام وهو البعث بعد الموت" },
+    { word: "مهادا", meaning: "ممهدة صالحة للاستقرار والسير عليها" },
+    { word: "أوتادا", meaning: "كالأوتاد تثبت الأرض لئلا تضطرب" },
+    { word: "سباتا", meaning: "راحة لأبدانكم وقطعاً لعملكم" },
+    { word: "سبعا شدادا", meaning: "سبع سماوات متينة محكمة البناء" },
+    { word: "سراجا وهاجا", meaning: "شمساً مضيئة متقدة بالحرارة" },
+    { word: "المعصرات", meaning: "السحاب الممتلئ بالماء الذي شارف على الهطول" },
+    { word: "ثجاجا", meaning: "صباباً متدفقاً بغزارة" },
+    { word: "كأسا دهاقا", meaning: "كأساً مملوءة صافية" }
+  ],
+  583: [
+    { word: "مفازا", meaning: "فوزاً وظفراً بالجنة والنجاة من النار" },
+    { word: "كواعب أترابا", meaning: "فتيات حسناوات متساويات في السن" },
+    { word: "والنازعات غرقا", meaning: "الملائكة تنزع أرواح الكفار بشدة وعنف" },
+    { word: "والناشطات نشطا", meaning: "الملائكة تسل أرواح المؤمنين برفق وسهولة" },
+    { word: "والسابحات سبحا", meaning: "الملائكة تسبح في النزول والصعود بأمر الله" },
+    { word: "الراجفة", meaning: "النفخة الأولى التي تهتز وترتجف لها الأرض والجبال" },
+    { word: "الرادفة", meaning: "النفخة الثانية التي تتبع الأولى للبعث" },
+    { word: "واجفة", meaning: "خائفة مضطربة شديدة الفزع" },
+    { word: "الحافرة", meaning: "الحالة الأولى التي كنا عليها في الدنيا (أحياء)" },
+    { word: "نخرة", meaning: "بالية مفتتة" },
+    { word: "الساهرة", meaning: "وجه الأرض أحياء بعد موتهم في المحشر" }
+  ],
+  584: [
+    { word: "طوى", meaning: "اسم الوادي المقدس في سيناء" },
+    { word: "طغى", meaning: "جاوز الحد في الكبر والظلم والفساد" },
+    { word: "تزكى", meaning: "تتطهر من الكفر والذنوب وتؤمن بربك" },
+    { word: "أدبر يسعى", meaning: "ولى معرضاً عن الحق ومجتهداً في محاربة نبي الله موسى" },
+    { word: "نكال الآخرة", meaning: "عقوبة الآخرة وعذابها الشديد" },
+    { word: "سمكها فسواها", meaning: "رفع بناء السماء في الفضاء وأحكم خلقه دون عيب" },
+    { word: "وأغطش ليلها", meaning: "أظلم ليلها بعد غروب الشمس" },
+    { word: "وأخرج ضحاها", meaning: "أظهر نهارها وضياءها بالشمس" },
+    { word: "دحاها", meaning: "بسطها ومهدها للاستقرار والعيش عليها" },
+    { word: "الطامة الكبرى", meaning: "القيامة والبعث حين تطم وتغلب أهوالها كل شيء" }
+  ],
+  585: [
+    { word: "عبس وتولى", meaning: "قطب وجهه وضيق جبهته وأعرض" },
+    { word: "بأيدي سفرة", meaning: "ملائكة يكتبون الوحي وينقلونه، وهم سفراء بين الله وخلقه" },
+    { word: "كرام بررة", meaning: "مطهرين أتقياء صادقين" },
+    { word: "قتل الإنسان", meaning: "لعن الإنسان الكافر وعذب كفره الشديد" },
+    { word: "صببنا الماء صبا", meaning: "أنزلنا المطر بغزارة وتدفق" },
+    { word: "شققنا الأرض شقا", meaning: "شققناها بالنبات النامي الخارج منها" },
+    { word: "وقضبا", meaning: "علَفاً رطباً للدواب والأنعام (كالبرسيم)" },
+    { word: "حدائق غلبا", meaning: "بساتين كثيرة الأشجار ملتفة الأغصان" },
+    { word: "وأبا", meaning: "كلاً وعشباً للدواب والأنعام" },
+    { word: "الصاخة", meaning: "الصيحة العظيمة المدوية التي تصم الآذان وهي نفخة البعث" },
+    { word: "قترة", meaning: "ظلمة وغبرة وسواد" }
+  ],
+  586: [
+    { word: "كورت", meaning: "جمعت ولف ذهاب ضيائها وأظلمت" },
+    { word: "انكدرت", meaning: "تساقطت وتناثرت وتغير لونها وذهب ضوؤها" },
+    { word: "سيرت", meaning: "نسفت من أماكنها وصارت هباءً منبثاً" },
+    { word: "العشار عطلت", meaning: "النوق الحوامل الثمينة أهملت وتركها أصحابها بلا راعٍ" },
+    { word: "حشرت", meaning: "جمع الوحوش ليتناصف بعضها من بعض" },
+    { word: "سجرت", meaning: "أوقدت وصارت ناراً تتأجج" },
+    { word: "النفوس زوجت", meaning: "قرن كل صاحب عمل بنظيره" },
+    { word: "الموؤودة سئلت", meaning: "الطفلة التي دفنت حية في التراب خوف العار أو الفقر" },
+    { word: "الصحف نشرت", meaning: "بسطت صحف الأعمال لتقرأ" },
+    { word: "كشطت", meaning: "نزعت وأزيلت عن أماكنها كما ينزع الجلد" },
+    { word: "سعرت", meaning: "أوقدت بشدة وضوعف لهيبها" }
+  ],
+  604: [
+    { word: "الوسواس الخناس", meaning: "الشيطان الذي يوسوس عند الغفلة ويختفي ويتراجع عند ذكر الله" },
+    { word: "الجنة والناس", meaning: "شياطين الجن وشياطين الإنس" }
+  ]
+};
+
 // ─── Quran Tracker & Visual Mushaf ────────────────────────────────────────────
 const QuranTracker: React.FC = () => {
   const todayStr = new Date().toDateString();
@@ -122,6 +191,41 @@ const QuranTracker: React.FC = () => {
       return null;
     }
   });
+
+  const [tafsirAyahs, setTafsirAyahs] = useState<{ number: number; text: string }[]>([]);
+  const [loadingTafsir, setLoadingTafsir] = useState(false);
+  const [tafsirError, setTafsirError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    setLoadingTafsir(true);
+    setTafsirError("");
+    setTafsirAyahs([]);
+    
+    fetch(`https://api.alquran.cloud/v1/page/${activePage}/ar.muyassar`)
+      .then(res => {
+        if (!res.ok) throw new Error("فشل تحميل التفسير");
+        return res.json();
+      })
+      .then(json => {
+        if (active && json.code === 200 && json.data && json.data.ayahs) {
+          setTafsirAyahs(json.data.ayahs.map((a: any) => ({
+            number: a.numberInSurah,
+            text: a.text
+          })));
+        }
+      })
+      .catch(() => {
+        if (active) setTafsirError("تعذر تحميل التفسير المباشر للصفحة.");
+      })
+      .finally(() => {
+        if (active) setLoadingTafsir(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activePage]);
 
   useEffect(() => {
     localStorage.setItem(QURAN_KEY, JSON.stringify(quran));
@@ -421,92 +525,173 @@ const QuranTracker: React.FC = () => {
           </div>
         )}
 
-        {/* Mushaf Page Image Display Frame (100% Authentic Images) */}
+        {/* Mushaf + Tafsir Side-by-Side Flex Layout */}
         <div style={{
-          backgroundColor: "#f7f5ed", // warm paper page color
-          borderRadius: "16px",
-          padding: "16px",
-          border: "2px solid #e5dec9",
-          boxShadow: "inset 0 4px 12px rgba(0,0,0,0.06)",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "16px",
-          position: "relative"
+          gap: "20px",
+          flexWrap: "wrap",
+          width: "100%",
+          justifyContent: "center",
+          alignItems: "stretch"
         }}>
-          {/* Page Image */}
+          
+          {/* Left/Center Column: Mushaf Page Frame */}
           <div style={{
-            maxWidth: "100%",
-            width: "480px",
-            minHeight: "500px",
-            backgroundColor: "white",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-            borderRadius: "8px",
-            overflow: "hidden",
+            flex: "1 1 480px",
+            maxWidth: "500px",
+            backgroundColor: "#f7f5ed", // warm paper page color
+            borderRadius: "16px",
+            padding: "16px",
+            border: "2px solid #e5dec9",
+            boxShadow: "inset 0 4px 12px rgba(0,0,0,0.06)",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            border: "1px solid #d4ccb6"
+            gap: "16px",
+            position: "relative"
           }}>
-            <img
-              src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${activePage.toString().padStart(3, '0')}.png`}
-              alt={`مصحف المدينة صفحة ${activePage}`}
-              style={{
-                width: "100%",
-                height: "auto",
-                display: "block",
-                filter: "contrast(1.05) saturate(0.95)"
-              }}
-              loading="eager"
-            />
+            {/* Page Image */}
+            <div style={{
+              maxWidth: "100%",
+              width: "480px",
+              minHeight: "500px",
+              backgroundColor: "white",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+              borderRadius: "8px",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid #d4ccb6"
+            }}>
+              <img
+                src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${activePage.toString().padStart(3, '0')}.png`}
+                alt={`مصحف المدينة صفحة ${activePage}`}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  display: "block",
+                  filter: "contrast(1.05) saturate(0.95)"
+                }}
+                loading="eager"
+              />
+            </div>
+
+            {/* Hidden Image Preloader for instant page turning */}
+            <div style={{ display: "none" }}>
+              {activePage < 604 && (
+                <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 1).toString().padStart(3, '0')}.png`} />
+              )}
+              {activePage < 603 && (
+                <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 2).toString().padStart(3, '0')}.png`} />
+              )}
+              {activePage > 1 && (
+                <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage - 1).toString().padStart(3, '0')}.png`} />
+              )}
+            </div>
+
+            {/* Navigation Controls Bar */}
+            <div style={{ display: "flex", gap: "16px", alignItems: "center", width: "100%", justifyContent: "center" }}>
+              {/* Prev Page Button (turns to page with lower index - right to left navigation) */}
+              <button
+                onClick={turnPagePrev}
+                disabled={activePage === 1}
+                style={{
+                  ...navArrowBtn,
+                  opacity: activePage === 1 ? 0.4 : 1,
+                  cursor: activePage === 1 ? "not-allowed" : "pointer"
+                }}
+                title="الصفحة السابقة"
+              >
+                السابق (يمين) →
+              </button>
+
+              <span style={{ fontSize: "14px", fontWeight: "800", color: "#4b4435", fontFamily: "system-ui" }}>
+                صفحة {activePage} من 604
+              </span>
+
+              {/* Next Page Button (turns to page with higher index) */}
+              <button
+                onClick={turnPageNext}
+                disabled={activePage === 604}
+                style={{
+                  ...navArrowBtn,
+                  opacity: activePage === 604 ? 0.4 : 1,
+                  cursor: activePage === 604 ? "not-allowed" : "pointer"
+                }}
+                title="الصفحة التالية"
+              >
+                ← التالي (يسار)
+              </button>
+            </div>
           </div>
 
-          {/* Hidden Image Preloader for instant page turning */}
-          <div style={{ display: "none" }}>
-            {activePage < 604 && (
-              <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 1).toString().padStart(3, '0')}.png`} />
-            )}
-            {activePage < 603 && (
-              <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 2).toString().padStart(3, '0')}.png`} />
-            )}
-            {activePage > 1 && (
-              <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage - 1).toString().padStart(3, '0')}.png`} />
-            )}
-          </div>
+          {/* Right Column: Words Meanings & Tafsir Card */}
+          <div style={{
+            flex: "1 1 350px",
+            minWidth: "300px",
+            backgroundColor: "var(--bg-card)",
+            borderRadius: "16px",
+            padding: "20px",
+            border: "1px solid var(--bg-accent)",
+            boxShadow: "var(--shadow-card)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            textAlign: "right"
+          }}>
+            <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "900", color: "var(--brand)", borderBottom: "2.5px solid var(--bg-accent)", paddingBottom: "10px" }}>
+              تفسير وكلمات الصفحة {activePage}
+            </h4>
 
-          {/* Navigation Controls Bar */}
-          <div style={{ display: "flex", gap: "16px", alignItems: "center", width: "100%", justifyContent: "center" }}>
-            {/* Prev Page Button (turns to page with lower index - right to left navigation) */}
-            <button
-              onClick={turnPagePrev}
-              disabled={activePage === 1}
-              style={{
-                ...navArrowBtn,
-                opacity: activePage === 1 ? 0.4 : 1,
-                cursor: activePage === 1 ? "not-allowed" : "pointer"
-              }}
-              title="الصفحة السابقة"
-            >
-              السابق (يمين) →
-            </button>
+            {/* Part 1: Word Meanings (Local Dictionary) */}
+            {QURAN_WORDS_DICTIONARY[activePage] && QURAN_WORDS_DICTIONARY[activePage].length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", borderBottom: "1px solid var(--bg-accent)", paddingBottom: "14px" }}>
+                <h5 style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: "bold", color: "var(--gold)" }}>غريب كلمات الصفحة:</h5>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {QURAN_WORDS_DICTIONARY[activePage].map((item, idx) => (
+                    <div key={idx} style={{ padding: "8px 12px", backgroundColor: "var(--bg-primary)", borderRadius: "8px", borderRight: "3px solid var(--gold)", fontSize: "13px" }}>
+                      <span style={{ fontWeight: "800", color: "var(--text-main)" }}>{item.word}</span>:{" "}
+                      <span style={{ color: "var(--text-muted)" }}>{item.meaning}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ borderBottom: "1px solid var(--bg-accent)", paddingBottom: "14px" }}>
+                <p style={{ margin: 0, fontSize: "11px", color: "var(--text-muted)", fontStyle: "italic" }}>
+                  لا توجد كلمات غريبة مسجلة لهذه الصفحة. يمكنك قراءة التفسير الميسر للآيات بالأسفل.
+                </p>
+              </div>
+            )}
 
-            <span style={{ fontSize: "14px", fontWeight: "800", color: "#4b4435", fontFamily: "system-ui" }}>
-              صفحة {activePage} من 604
-            </span>
-
-            {/* Next Page Button (turns to page with higher index) */}
-            <button
-              onClick={turnPageNext}
-              disabled={activePage === 604}
-              style={{
-                ...navArrowBtn,
-                opacity: activePage === 604 ? 0.4 : 1,
-                cursor: activePage === 604 ? "not-allowed" : "pointer"
-              }}
-              title="الصفحة التالية"
-            >
-              ← التالي (يسار)
-            </button>
+            {/* Part 2: Tafsir Al-Muyassar */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+              <h5 style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: "bold", color: "var(--color-sage)" }}>تفسير آيات الصفحة (الميسر):</h5>
+              {loadingTafsir ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 10px" }}>
+                  <div style={{
+                    width: "24px",
+                    height: "24px",
+                    border: "3px solid var(--bg-accent)",
+                    borderTop: "3px solid var(--color-sage)",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite"
+                  }} />
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "8px" }}>جاري تحميل التفسير...</p>
+                </div>
+              ) : tafsirError ? (
+                <p style={{ fontSize: "12px", color: "var(--color-terracotta)", textAlign: "center", padding: "20px 0" }}>{tafsirError}</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "400px", overflowY: "auto", paddingLeft: "8px" }}>
+                  {tafsirAyahs.map((a) => (
+                    <p key={a.number} style={{ margin: 0, fontSize: "13px", lineHeight: "1.7", textAlign: "right", color: "var(--text-main)" }}>
+                      <strong style={{ color: "var(--color-sage)", marginLeft: "4px" }}>({a.number})</strong> {a.text}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

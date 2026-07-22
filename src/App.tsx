@@ -24,65 +24,36 @@ const DEFAULT_HABITS: Habit[] = [
   { id: "3", name: "كتابة فكرة امتنان واحدة", completed: false, category: "mental" },
 ];
 
-
+const QURANIC_VERSES = [
+  { ayah: "الَّذِينَ آمَنُوا وَتَطْمَئِنُّ قُلُوبُهُم بِذِكْرِ اللَّهِ ۗ أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ", surah: "سورة الرعد - الآية 28" },
+  { ayah: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا * وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ", surah: "سورة الطلاق - الآية 2-3" },
+  { ayah: "إِنَّ مَعَ الْعُسْرِ يُسْرًا", surah: "سورة الشرح - الآية 6" },
+  { ayah: "وَوَجَدَكَ ضَالًّا فَهَدَىٰ", surah: "سورة الضحى - الآية 7" },
+  { ayah: "فَإِنِّي قَرِيبٌ ۖ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ", surah: "سورة البقرة - الآية 186" },
+  { ayah: "ادْعُونِي أَسْتَجِبْ لَكُمْ", surah: "سورة غافر - الآية 60" },
+  { ayah: "وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ وَإِنَّهَا لَكَبِيرَةٌ إِلَّا عَلَى الْخَاشِعِينَ", surah: "سورة البقرة - الآية 45" },
+  { ayah: "لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ", surah: "سورة إبراهيم - الآية 7" },
+  { ayah: "لا تَحْزَنْ إِنَّ اللَّهَ مَعَنَا", surah: "سورة التوبة - الآية 40" },
+  { ayah: "وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ", surah: "سورة الطلاق - الآية 3" },
+  { ayah: "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ", surah: "سورة البقرة - الآية 153" },
+  { ayah: "وَالذَّاكِرِينَ اللَّهَ كَثِيرًا وَالذَّاكِرَاتِ أَعَدَّ اللَّهُ لَهُم مَّغْفِرَةً وَأَجْرًا عَظِيمًا", surah: "سورة الأحزاب - الآية 35" }
+];
 
 export default function App() {
-  const [isSummerTime, setIsSummerTime] = useLocalStorage<boolean>("tawazon_use_summer_time", true);
-  const [challengeTitle, setChallengeTitle] = useState<string>("التزام بالرياضة والقراءة اليومية");
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const getRandomAyah = () => QURANIC_VERSES[Math.floor(Math.random() * QURANIC_VERSES.length)];
+  const [currentAyah, setCurrentAyah] = useState(getRandomAyah);
 
-  // Shift timing by 1 hour if summer time (DST) is active
-  const adjustPrayerTime = (timeStr: string) => {
-    if (!isSummerTime || !timeStr || timeStr === "--:--" || timeStr.includes("unknown")) return timeStr;
-    const [h, m] = timeStr.split(":").map(Number);
-    const adjustedH = (h + 1) % 24;
-    return `${adjustedH.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  const handleNextAyah = () => {
+    let next = getRandomAyah();
+    while (next.ayah === currentAyah.ayah && QURANIC_VERSES.length > 1) {
+      next = getRandomAyah();
+    }
+    setCurrentAyah(next);
   };
 
+  const [challengeTitle, setChallengeTitle] = useState<string>("التزام بالرياضة والقراءة اليومية");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [newHabitName, setNewHabitName] = useState("");
-  const [prayers, setPrayers] = useState<{ arabicName: string; time: string }[]>([]);
-
-  // Fetch real prayer times for Cairo/Egypt or fallback
-  useEffect(() => {
-    const stored = localStorage.getItem("tawazon_prayers");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.date === new Date().toDateString()) {
-          setPrayers(parsed.prayers);
-          return;
-        }
-      } catch {}
-    }
-
-    fetch("https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=5")
-      .then(res => res.json())
-      .then(json => {
-        const timings = json.data.timings;
-        const PRAYER_NAMES = [
-          { name: "Fajr",   arabicName: "الفجر" },
-          { name: "Dhuhr",  arabicName: "الظهر" },
-          { name: "Asr",    arabicName: "العصر" },
-          { name: "Maghrib",arabicName: "المغرب" },
-          { name: "Isha",   arabicName: "العشاء" },
-        ];
-        const built = PRAYER_NAMES.map(p => ({
-          arabicName: p.arabicName,
-          time: timings[p.name]?.slice(0, 5) || "--:--",
-        }));
-        setPrayers(built);
-        localStorage.setItem("tawazon_prayers", JSON.stringify({ date: new Date().toDateString(), prayers: built }));
-      })
-      .catch(() => {
-        setPrayers([
-          { arabicName: "الفجر", time: "03:32" },
-          { arabicName: "الظهر", time: "12:02" },
-          { arabicName: "العصر", time: "15:39" },
-          { arabicName: "المغرب", time: "19:01" },
-          { arabicName: "العشاء", time: "20:31" },
-        ]);
-      });
-  }, []);
 
   const handleAddCustomHabit = (e: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -844,49 +815,74 @@ export default function App() {
             <div className="dashboard-grid-inner">
               {/* Left Column: Prayer Times Widget & Habit Checklist */}
               <div style={dashboardColumnStyle}>
-                {/* Prayer Times Banner */}
-                <div className="prayer-times-banner">
-                  
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                    <h4 style={{ ...prayerBannerTitleStyle, margin: 0, color: "white" }}>مواقيت الصلاة</h4>
+                {/* Quranic Ayah Card (آية قرآنية تتغير مع كل دخول وتسجيل) */}
+                <div 
+                  className="card" 
+                  style={{
+                    background: "linear-gradient(135deg, #105b3d 0%, #0d462f 100%)",
+                    color: "white",
+                    borderRadius: "20px",
+                    padding: "24px 20px",
+                    boxShadow: "0 10px 25px rgba(16, 91, 61, 0.25)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                >
+                  {/* Subtle Background Decorative Circle */}
+                  <div style={{
+                    position: "absolute",
+                    top: "-30px",
+                    right: "-30px",
+                    width: "120px",
+                    height: "120px",
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    pointerEvents: "none"
+                  }} />
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "12px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: "800", letterSpacing: "0.5px", backgroundColor: "rgba(255, 255, 255, 0.15)", padding: "4px 12px", borderRadius: "20px" }}>
+                      📖 آية اليوم والسكينة
+                    </span>
                     <button
-                      onClick={() => setIsSummerTime(!isSummerTime)}
+                      onClick={handleNextAyah}
                       style={{
                         background: "rgba(255, 255, 255, 0.18)",
                         border: "none",
                         borderRadius: "12px",
-                        padding: "4px 10px",
+                        padding: "5px 12px",
                         color: "white",
-                        fontSize: "10px",
-                        fontWeight: "800",
+                        fontSize: "11px",
+                        fontWeight: "700",
                         cursor: "pointer",
                         outline: "none",
                         transition: "all 0.2s ease"
                       }}
-                      title="اضغط للتحويل بين التوقيت الصيفي والشتوي"
+                      title="عرض آية قرآنية أخرى"
                     >
-                      {isSummerTime ? "☀️ التوقيت الصيفي" : "❄️ التوقيت الشتوي"}
+                      🔄 آية أخرى
                     </button>
                   </div>
 
-                  <div className="prayer-banner-grid">
-                    {prayers.length > 0 ? (
-                      prayers.map((p, idx) => (
-                        <div key={idx} className="prayer-banner-col">
-                          <span style={prayerValueStyle}>{adjustPrayerTime(p.time)}</span>
-                          <span style={prayerLabelStyle}>{p.arabicName}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <>
-                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الفجر</span></div>
-                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>الظهر</span></div>
-                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العصر</span></div>
-                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>المغرب</span></div>
-                        <div className="prayer-banner-col"><span style={prayerValueStyle}>--:--</span><span style={prayerLabelStyle}>العشاء</span></div>
-                      </>
-                    )}
-                  </div>
+                  <p style={{
+                    fontFamily: "Thmanyah Serif Display, serif",
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    lineHeight: "1.9",
+                    margin: "12px 0 14px",
+                    color: "#ffffff",
+                    textShadow: "0 2px 4px rgba(0,0,0,0.15)"
+                  }}>
+                    ﴿ {currentAyah.ayah} ﴾
+                  </p>
+
+                  <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.8)", fontWeight: "600" }}>
+                    {currentAyah.surah}
+                  </span>
                 </div>
 
                 {/* Habit Checklist (مفردات العادية) */}
@@ -1456,26 +1452,7 @@ const cardFooterBtnStyle: React.CSSProperties = {
 };
 
 
-const prayerBannerTitleStyle: React.CSSProperties = {
-  fontSize: "14px",
-  fontWeight: "800",
-  color: "white",
-  margin: "0 0 16px 0",
-  textAlign: "right",
-};
 
-
-const prayerValueStyle: React.CSSProperties = {
-  fontSize: "16px",
-  fontWeight: "900",
-  color: "white",
-};
-
-const prayerLabelStyle: React.CSSProperties = {
-  fontSize: "10px",
-  color: "rgba(255, 255, 255, 0.75)",
-  fontWeight: "700",
-};
 
 const checklistTitleStyle: React.CSSProperties = {
   fontSize: "14px",

@@ -23,14 +23,6 @@ const PRAYER_NAMES = [
 ];
 
 const STORAGE_KEY = "tawazon_prayers";
-const SOUND_ENABLED_KEY = "tawazon_adhan_enabled";
-const SOUND_TYPE_KEY = "tawazon_adhan_sound";
-
-// Public URLs of premium audio resources
-const AUDIO_URLS = {
-  takbeer: "https://raw.githubusercontent.com/ahmed-hussein/adhan-mp3/main/takbeer.mp3",
-  chime: "https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav"
-};
 
 // Helper calculators
 function toMins(time: string): number {
@@ -54,7 +46,6 @@ const GOLD_COLOR  = "#c8963e";
 // ─── Main Prayer Times Component ──────────────────────────────────────────────
 export const PrayerTimes: React.FC = () => {
   const [prayers, setPrayers] = useState<PrayerTime[]>([]);
-  const [expandedPrayer, setExpandedPrayer] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [now, setNow] = useState(new Date());
@@ -65,14 +56,6 @@ export const PrayerTimes: React.FC = () => {
   const [qiblaAngle, setQiblaAngle] = useState<number | null>(null);
   const [deviceHeading, setDeviceHeading] = useState<number>(0);
   const [compassSupported, setCompassSupported] = useState(false);
-
-  // Sound notification states
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
-    return localStorage.getItem(SOUND_ENABLED_KEY) === "true";
-  });
-  const [soundType, setSoundType] = useState<"takbeer" | "chime">(() => {
-    return (localStorage.getItem(SOUND_TYPE_KEY) as "takbeer" | "chime") || "takbeer";
-  });
 
   const todayStr = new Date().toDateString();
 
@@ -230,34 +213,26 @@ export const PrayerTimes: React.FC = () => {
     setNextPrayer(found);
   }, [now, prayers]);
 
+  // Save history helper
+  const syncPrayerHistory = (updatedPrayers: any[], updatedSunan?: any) => {
+    try {
+      const history = JSON.parse(localStorage.getItem("tawazon_prayers_history") || "{}");
+      history[todayStr] = {
+        prayers: updatedPrayers,
+        sunan: updatedSunan || sunan,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem("tawazon_prayers_history", JSON.stringify(history));
+    } catch {}
+  };
+
   // Done toggling handler
   const toggleDone = (index: number) => {
     const updated = prayers.map((p, i) => i === index ? { ...p, done: !p.done } : p);
     setPrayers(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: todayStr, prayers: updated }));
+    syncPrayerHistory(updated);
   };
-
-  // Play audio preview
-  const playPreview = (type: "takbeer" | "chime") => {
-    const url = AUDIO_URLS[type];
-    const audio = new Audio(url);
-    audio.volume = 0.6;
-    audio.play().catch(() => alert("انقر على الصفحة أولاً للسماح للمتصفح بتشغيل الملف الصوتي."));
-  };
-
-  const handleSoundToggle = (enabled: boolean) => {
-    setSoundEnabled(enabled);
-    localStorage.setItem(SOUND_ENABLED_KEY, String(enabled));
-  };
-
-  const handleSoundTypeChange = (type: "takbeer" | "chime") => {
-    setSoundType(type);
-    localStorage.setItem(SOUND_TYPE_KEY, type);
-    playPreview(type);
-  };
-
-  const sunanCompletedGroups = Object.values(sunan).filter(Boolean).length;
-  const sunanTotalGroups = 5;
 
   const calculateSunanRakahs = () => {
     let count = 0;
@@ -269,6 +244,16 @@ export const PrayerTimes: React.FC = () => {
     return count;
   };
   const completedRakahs = calculateSunanRakahs();
+
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const handleSaveToday = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: todayStr, prayers }));
+    localStorage.setItem("tawazon_sunan", JSON.stringify({ date: todayStr, status: sunan }));
+    syncPrayerHistory(prayers, sunan);
+    setSaveMessage("تم حفظ صلوات وسنن اليوم بنجاح ✨");
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
 
   const doneCount = prayers.filter(p => p.name !== "Sunrise" && p.done).length;
   const totalObligatory = 5;
@@ -319,9 +304,9 @@ export const PrayerTimes: React.FC = () => {
         <div style={progressBarOuter}>
           <div style={{ ...progressBarInner, width: `${(doneCount / totalObligatory) * 100}%` }} />
         </div>
-        <p style={progressText}>{doneCount} من {totalObligatory} صلوات مكتملة اليوم</p>
+        <p style={progressText}>الفرائض: {doneCount} من {totalObligatory} صلوات مكتملة اليوم</p>
         <p style={sunanProgressText}>
-          السنن الرواتب: {sunanCompletedGroups} من {sunanTotalGroups} ({completedRakahs} ركعة من ١٢ ركعة)
+          السنن الرواتب: {completedRakahs} من 12 ركعة
         </p>
       </div>
 
@@ -351,17 +336,8 @@ export const PrayerTimes: React.FC = () => {
                 return (
                   <div
                     key={p.name}
-                    onClick={() => {
-                      if (!isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha")) {
-                        setExpandedPrayer(expandedPrayer === p.name ? null : p.name);
-                      }
-                    }}
                     style={{
                       ...prayerRow,
-                      flexDirection: "column",
-                      alignItems: "stretch",
-                      gap: "10px",
-                      cursor: !isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") ? "pointer" : "default",
                       ...(current ? currentRow : {}),
                       ...(isSunrise ? sunriseRow : {}),
                       opacity: isSunrise ? 0.65 : 1,
@@ -376,11 +352,6 @@ export const PrayerTimes: React.FC = () => {
                           <p style={{ ...prayerName, color: current ? "var(--brand)" : "var(--text-main)", display: "flex", alignItems: "center", gap: "6px" }}>
                             {p.arabicName}
                             {current && <span style={currentBadge}>الآن</span>}
-                            {!isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") && (
-                              <span style={{ fontSize: "10px", color: "var(--text-muted)", marginRight: "4px" }}>
-                                {expandedPrayer === p.name ? "▲ سنن" : "▼ سنن"}
-                              </span>
-                            )}
                           </p>
                           <p style={{ ...prayerTime, color: past && !current ? "var(--text-muted)" : "var(--text-main)" }}>
                             {p.time}
@@ -409,65 +380,201 @@ export const PrayerTimes: React.FC = () => {
                         </button>
                       )}
                     </div>
-
-                    {/* Sunan Rawatib Sub-row */}
-                    {expandedPrayer === p.name && !isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") && (
-                      <div 
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ display: "flex", gap: "8px", flexWrap: "wrap", padding: "6px 8px", borderTop: "1px solid var(--bg-accent)", marginTop: "2px" }}
-                      >
-                        {p.name === "Fajr" && (
-                          <button
-                            onClick={() => toggleSunnah("Fajr_pre")}
-                            style={sunnahPillStyle(sunan.Fajr_pre)}
-                          >
-                            <span>{sunan.Fajr_pre ? "✓" : "○"}</span>
-                            <span>سنة قبلية (٢ ركعة)</span>
-                          </button>
-                        )}
-                        {p.name === "Dhuhr" && (
-                          <>
-                            <button
-                              onClick={() => toggleSunnah("Dhuhr_pre")}
-                              style={sunnahPillStyle(sunan.Dhuhr_pre)}
-                            >
-                              <span>{sunan.Dhuhr_pre ? "✓" : "○"}</span>
-                              <span>سنة قبلية (٤ ركعات)</span>
-                            </button>
-                            <button
-                              onClick={() => toggleSunnah("Dhuhr_post")}
-                              style={sunnahPillStyle(sunan.Dhuhr_post)}
-                            >
-                              <span>{sunan.Dhuhr_post ? "✓" : "○"}</span>
-                              <span>سنة بعدية (٢ ركعة)</span>
-                            </button>
-                          </>
-                        )}
-                        {p.name === "Maghrib" && (
-                          <button
-                            onClick={() => toggleSunnah("Maghrib_post")}
-                            style={sunnahPillStyle(sunan.Maghrib_post)}
-                          >
-                            <span>{sunan.Maghrib_post ? "✓" : "○"}</span>
-                            <span>سنة بعدية (٢ ركعة)</span>
-                          </button>
-                        )}
-                        {p.name === "Isha" && (
-                          <button
-                            onClick={() => toggleSunnah("Isha_post")}
-                            style={sunnahPillStyle(sunan.Isha_post)}
-                          >
-                            <span>{sunan.Isha_post ? "✓" : "○"}</span>
-                            <span>سنة بعدية (٢ ركعة)</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
           )}
+          
+          <button
+            onClick={handleSaveToday}
+            style={{
+              marginTop: "16px",
+              width: "100%",
+              padding: "12px",
+              borderRadius: "12px",
+              backgroundColor: BRAND_COLOR,
+              color: "#fff",
+              border: "none",
+              fontWeight: "700",
+              fontSize: "0.95rem",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)",
+              transition: "transform 0.15s ease"
+            }}
+          >
+            حفظ صلوات اليوم
+          </button>
+        </div>
+
+        {/* Column 1.5: Sunan al-Rawatib list */}
+        <div className="prayer-column-card">
+          <h4 style={panelTitle}>قائمة السنن الرواتب</h4>
+          <div style={prayerList}>
+            
+            {/* 1. Fajr Pre Sunnah */}
+            <div
+              onClick={() => toggleSunnah("Fajr_pre")}
+              style={{ ...prayerRow, cursor: "pointer" }}
+            >
+              <div style={prayerLeft}>
+                <div>
+                  <p style={{ ...prayerName, color: "var(--text-main)" }}>سنة الفجر القبلية</p>
+                  <p style={{ ...prayerTime, color: "var(--text-muted)" }}>ركعتان قبل صلاة الفجر</p>
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleSunnah("Fajr_pre"); }}
+                style={{
+                  ...checkBtn,
+                  backgroundColor: sunan.Fajr_pre ? BRAND_COLOR : "transparent",
+                  borderColor: sunan.Fajr_pre ? BRAND_COLOR : "var(--bg-accent)",
+                }}
+              >
+                {sunan.Fajr_pre && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* 2. Dhuhr Pre Sunnah */}
+            <div
+              onClick={() => toggleSunnah("Dhuhr_pre")}
+              style={{ ...prayerRow, cursor: "pointer" }}
+            >
+              <div style={prayerLeft}>
+                <div>
+                  <p style={{ ...prayerName, color: "var(--text-main)" }}>سنة الظهر القبلية</p>
+                  <p style={{ ...prayerTime, color: "var(--text-muted)" }}>أربع ركعات قبل الظهر</p>
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleSunnah("Dhuhr_pre"); }}
+                style={{
+                  ...checkBtn,
+                  backgroundColor: sunan.Dhuhr_pre ? BRAND_COLOR : "transparent",
+                  borderColor: sunan.Dhuhr_pre ? BRAND_COLOR : "var(--bg-accent)",
+                }}
+              >
+                {sunan.Dhuhr_pre && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* 3. Dhuhr Post Sunnah */}
+            <div
+              onClick={() => toggleSunnah("Dhuhr_post")}
+              style={{ ...prayerRow, cursor: "pointer" }}
+            >
+              <div style={prayerLeft}>
+                <div>
+                  <p style={{ ...prayerName, color: "var(--text-main)" }}>سنة الظهر البعدية</p>
+                  <p style={{ ...prayerTime, color: "var(--text-muted)" }}>ركعتان بعد صلاة الظهر</p>
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleSunnah("Dhuhr_post"); }}
+                style={{
+                  ...checkBtn,
+                  backgroundColor: sunan.Dhuhr_post ? BRAND_COLOR : "transparent",
+                  borderColor: sunan.Dhuhr_post ? BRAND_COLOR : "var(--bg-accent)",
+                }}
+              >
+                {sunan.Dhuhr_post && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* 4. Maghrib Post Sunnah */}
+            <div
+              onClick={() => toggleSunnah("Maghrib_post")}
+              style={{ ...prayerRow, cursor: "pointer" }}
+            >
+              <div style={prayerLeft}>
+                <div>
+                  <p style={{ ...prayerName, color: "var(--text-main)" }}>سنة المغرب البعدية</p>
+                  <p style={{ ...prayerTime, color: "var(--text-muted)" }}>ركعتان بعد المغرب</p>
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleSunnah("Maghrib_post"); }}
+                style={{
+                  ...checkBtn,
+                  backgroundColor: sunan.Maghrib_post ? BRAND_COLOR : "transparent",
+                  borderColor: sunan.Maghrib_post ? BRAND_COLOR : "var(--bg-accent)",
+                }}
+              >
+                {sunan.Maghrib_post && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* 5. Isha Post Sunnah */}
+            <div
+              onClick={() => toggleSunnah("Isha_post")}
+              style={{ ...prayerRow, cursor: "pointer" }}
+            >
+              <div style={prayerLeft}>
+                <div>
+                  <p style={{ ...prayerName, color: "var(--text-main)" }}>سنة العشاء البعدية</p>
+                  <p style={{ ...prayerTime, color: "var(--text-muted)" }}>ركعتان بعد صلاة العشاء</p>
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleSunnah("Isha_post"); }}
+                style={{
+                  ...checkBtn,
+                  backgroundColor: sunan.Isha_post ? BRAND_COLOR : "transparent",
+                  borderColor: sunan.Isha_post ? BRAND_COLOR : "var(--bg-accent)",
+                }}
+              >
+                {sunan.Isha_post && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            <button
+              onClick={handleSaveToday}
+              style={{
+                marginTop: "16px",
+                width: "100%",
+                padding: "12px",
+                borderRadius: "12px",
+                backgroundColor: BRAND_COLOR,
+                color: "#fff",
+                border: "none",
+                fontWeight: "700",
+                fontSize: "0.95rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)",
+                transition: "transform 0.15s ease"
+              }}
+            >
+              حفظ السنن الرواتب
+            </button>
+          </div>
         </div>
 
         {/* Column 2: Compass & Sound Settings */}
@@ -528,92 +635,33 @@ export const PrayerTimes: React.FC = () => {
             </div>
           </div>
 
-          {/* Sound settings card */}
-          <div className="prayer-column-card">
-            <h4 style={panelTitle}>إعدادات أصوات تنبيه الصلاة</h4>
-            
-            {/* Audio Toggle switch */}
-            <div style={soundToggleRow}>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={soundToggleLbl}>تفعيل التنبيه الصوتي الأوتوماتيكي</span>
-                <span style={soundToggleDesc}>تشغيل نغمة روحية أو تكبيرات فور دخول وقت الصلاة</span>
-              </div>
-              <button
-                onClick={() => handleSoundToggle(!soundEnabled)}
-                style={{
-                  ...switchStyle,
-                  backgroundColor: soundEnabled ? BRAND_COLOR : "var(--bg-accent)"
-                }}
-              >
-                <div style={{
-                  ...switchThumb,
-                  transform: soundEnabled ? "translateX(-20px)" : "translateX(0)"
-                }} />
-              </button>
-            </div>
 
-            {/* Selector list of sound types */}
-            {soundEnabled && (
-              <div style={soundOptionsContainer}>
-                <p style={optionTitle}>اختر نغمة التنبيه:</p>
-                
-                {/* Option 1: Takbeer */}
-                <div 
-                  onClick={() => handleSoundTypeChange("takbeer")}
-                  style={{
-                    ...soundOptionCard,
-                    borderColor: soundType === "takbeer" ? BRAND_COLOR : "var(--bg-accent)",
-                    backgroundColor: soundType === "takbeer" ? "var(--brand-xlight, #f0faf5)" : "var(--bg-primary)"
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={soundType === "takbeer" ? activeRadio : radioCircle} />
-                    <div>
-                      <p style={optionName}>صوت تكبيرات الأذان 🕌</p>
-                      <p style={optionDesc}>تسجيل صوتي للتكبير والتنبيه بدخول الصلاة</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); playPreview("takbeer"); }} 
-                    style={playPreviewBtn}
-                    title="استماع للتجربة"
-                  >
-                    🔊 تجربة
-                  </button>
-                </div>
-
-                {/* Option 2: Chime */}
-                <div 
-                  onClick={() => handleSoundTypeChange("chime")}
-                  style={{
-                    ...soundOptionCard,
-                    borderColor: soundType === "chime" ? BRAND_COLOR : "var(--bg-accent)",
-                    backgroundColor: soundType === "chime" ? "var(--brand-xlight, #f0faf5)" : "var(--bg-primary)"
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={soundType === "chime" ? activeRadio : radioCircle} />
-                    <div>
-                      <p style={optionName}>رنين روحي هادئ 🔔</p>
-                      <p style={optionDesc}>نغمة تنبيه أجراس جرس خفيفة وعميقة لتنبيه هادئ</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); playPreview("chime"); }} 
-                    style={playPreviewBtn}
-                    title="استماع للتجربة"
-                  >
-                    🔊 تجربة
-                  </button>
-                </div>
-
-              </div>
-            )}
-          </div>
 
         </div>
 
       </div>
+
+      {saveMessage && (
+        <div style={{
+          position: "fixed",
+          bottom: "28px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: BRAND_COLOR,
+          color: "#ffffff",
+          padding: "12px 24px",
+          borderRadius: "30px",
+          fontWeight: "700",
+          boxShadow: "0 8px 24px rgba(16, 185, 129, 0.4)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          animation: "fadeIn 0.2s ease-in-out"
+        }}>
+          <span>✨</span> {saveMessage}
+        </div>
+      )}
     </div>
   );
 };
@@ -849,123 +897,6 @@ const qiblaTips: React.CSSProperties = {
 };
 
 // Sound Settings styles
-const soundToggleRow: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  backgroundColor: "var(--bg-primary)",
-  borderRadius: "12px",
-  padding: "12px",
-  border: "1px solid var(--bg-accent)",
-};
-
-const soundToggleLbl: React.CSSProperties = {
-  fontSize: "13px",
-  fontWeight: "700",
-  color: "var(--text-main)",
-};
-
-const soundToggleDesc: React.CSSProperties = {
-  fontSize: "10px",
-  color: "var(--text-muted)",
-  marginTop: "2px",
-};
-
-const switchStyle: React.CSSProperties = {
-  width: "44px",
-  height: "24px",
-  borderRadius: "15px",
-  border: "none",
-  cursor: "pointer",
-  position: "relative",
-  padding: "2px",
-  display: "flex",
-  alignItems: "center",
-  transition: "background-color 0.25s ease",
-};
-
-const switchThumb: React.CSSProperties = {
-  width: "20px",
-  height: "20px",
-  borderRadius: "50%",
-  backgroundColor: "white",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-  position: "absolute",
-  right: "2px",
-  transition: "transform 0.25s ease",
-};
-
-const soundOptionsContainer: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  marginTop: "12px",
-};
-
-const optionTitle: React.CSSProperties = {
-  margin: "0 0 2px",
-  fontSize: "12px",
-  fontWeight: "700",
-  color: "var(--text-muted)",
-};
-
-const soundOptionCard: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  borderRadius: "10px",
-  border: "1px solid",
-  padding: "10px 12px",
-  cursor: "pointer",
-  transition: "all 0.2s ease",
-};
-
-const radioCircle: React.CSSProperties = {
-  width: "16px",
-  height: "16px",
-  borderRadius: "50%",
-  border: "2px solid var(--bg-accent)",
-  backgroundColor: "transparent",
-  display: "inline-block",
-  flexShrink: 0,
-};
-
-const activeRadio: React.CSSProperties = {
-  width: "16px",
-  height: "16px",
-  borderRadius: "50%",
-  border: `4.5px solid ${BRAND_COLOR}`,
-  backgroundColor: "white",
-  display: "inline-block",
-  flexShrink: 0,
-};
-
-const optionName: React.CSSProperties = {
-  margin: 0,
-  fontSize: "12px",
-  fontWeight: "700",
-  color: "var(--text-main)",
-};
-
-const optionDesc: React.CSSProperties = {
-  margin: "1px 0 0",
-  fontSize: "9px",
-  color: "var(--text-muted)",
-};
-
-const playPreviewBtn: React.CSSProperties = {
-  backgroundColor: "var(--bg-card)",
-  border: "1px solid var(--bg-accent)",
-  borderRadius: "6px",
-  padding: "4px 10px",
-  fontSize: "11px",
-  fontFamily: "inherit",
-  fontWeight: "600",
-  color: "var(--text-muted)",
-  cursor: "pointer",
-  transition: "all 0.2s ease",
-};
-
 const sunanProgressText: React.CSSProperties = {
   margin: "4px 0 0",
   fontSize: "11.5px",
@@ -973,19 +904,3 @@ const sunanProgressText: React.CSSProperties = {
   fontWeight: "700",
 };
 
-const sunnahPillStyle = (active: boolean): React.CSSProperties => ({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  padding: "4px 10px",
-  borderRadius: "12px",
-  border: "1px solid",
-  borderColor: active ? "var(--brand)" : "var(--bg-accent)",
-  backgroundColor: active ? "var(--brand-light)" : "var(--bg-card)",
-  color: active ? "var(--brand)" : "var(--text-muted)",
-  fontSize: "11px",
-  fontWeight: "bold",
-  cursor: "pointer",
-  transition: "all 0.15s ease",
-  outline: "none",
-});
