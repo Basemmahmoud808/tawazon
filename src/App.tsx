@@ -651,35 +651,12 @@ export default function App() {
                   onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"} 
                   onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
                 >
-                  تعرّف على الميزات ➔
-                </button>
-              </div>
-            )}
-
-            {onboardingStep === 2 && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", textAlign: "right" }}>
-                <span style={{ fontSize: "40px", marginBottom: "12px" }}>✨</span>
-                <h3 style={{ margin: "0 auto 12px", color: "var(--brand)", fontSize: "19px", fontWeight: "900", fontFamily: "Thmanyah Serif Display, serif", textAlign: "center" }}>
-                  ميزات المنصة الذكية
-                </h3>
-                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "10px", margin: "0 0 20px 0", fontSize: "12.5px", color: "var(--text-main)", lineHeight: "1.6" }}>
-                  <p>🕌 <strong>مواقيت الصلاة:</strong> تتبع الفروض بدقة مع دعم كامل لخيارات التوقيت الصيفي.</p>
-                  <p>📖 <strong>الورد القرآني:</strong> تصفح وقراءة مصحف مجمع الملك فهد بالصفحات الحقيقية للمتابعة اليومية.</p>
-                  <p>📿 <strong>الأذكار والعدادات:</strong> قراءة أذكار الصباح والمساء واليوم الليلة مع عداد ذكي تفاعلي.</p>
-                  <p>📅 <strong>تحدي الـ 90 يوماً:</strong> تقويم متكامل لبناء العادات ومتابعة التزامك اليومي بمرونة بالغة.</p>
-                </div>
-                <button 
-                  onClick={() => setOnboardingStep(3)} 
-                  style={duaModalBtnStyle}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"} 
-                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-                >
                   الخطوة التالية ➔
                 </button>
               </div>
             )}
 
-            {onboardingStep === 3 && (
+            {onboardingStep === 2 && (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
                 <span style={{ fontSize: "46px", marginBottom: "12px" }}>🤲</span>
                 <h3 style={{ margin: "0 0 12px", color: "var(--brand)", fontSize: "19px", fontWeight: "900", fontFamily: "Thmanyah Serif Display, serif" }}>
@@ -706,7 +683,6 @@ export default function App() {
             <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: "16px" }}>
               <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: onboardingStep === 1 ? "var(--brand)" : "var(--bg-accent)", transition: "all 0.2s" }} />
               <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: onboardingStep === 2 ? "var(--brand)" : "var(--bg-accent)", transition: "all 0.2s" }} />
-              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: onboardingStep === 3 ? "var(--brand)" : "var(--bg-accent)", transition: "all 0.2s" }} />
             </div>
 
           </div>

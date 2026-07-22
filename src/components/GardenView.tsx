@@ -83,6 +83,15 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
               <stop offset="0%" stopColor={isDark ? "#27272a" : "#e4e4e7"} />
               <stop offset="100%" stopColor={isDark ? "#09090b" : "#a1a1aa"} />
             </linearGradient>
+            <linearGradient id="petalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#fecdd3" />
+              <stop offset="50%" stopColor="#fb7185" />
+              <stop offset="100%" stopColor="#e11d48" />
+            </linearGradient>
+            <linearGradient id="innerPetalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#fef08a" />
+              <stop offset="100%" stopColor="#f97316" />
+            </linearGradient>
             <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
               <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity={isDark ? "0.35" : "0.08"} />
             </filter>
@@ -139,10 +148,10 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
             {/* Stage 1+: Stem (Sprout) */}
             {percentage > 0 && (
               <path 
-                d="M 100 149 C 98 128, 95 108, 100 80" 
+                d="M 100 149 C 99 130, 97 115, 98 100" 
                 fill="none" 
                 stroke="url(#stemGradient)" 
-                strokeWidth="5" 
+                strokeWidth="8" 
                 strokeLinecap="round"
                 style={{ transition: "all 0.8s ease" }}
               />
@@ -150,28 +159,40 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
 
             {/* Stage 3+: Upper Stem */}
             {percentage > 50 && (
-              <path 
-                d="M 100 80 C 103 66, 97 51, 100 36" 
-                fill="none" 
-                stroke="url(#stemGradient)" 
-                strokeWidth="4" 
-                strokeLinecap="round"
-                style={{ transition: "all 0.8s ease" }}
-              />
+              <g style={{ transition: "all 0.8s ease" }}>
+                <path 
+                  d="M 98 100 C 99 85, 101 70, 100 55" 
+                  fill="none" 
+                  stroke="url(#stemGradient)" 
+                  strokeWidth="5" 
+                  strokeLinecap="round"
+                />
+                <path 
+                  d="M 100 55 C 99 45, 101 32, 100 22" 
+                  fill="none" 
+                  stroke="url(#stemGradient)" 
+                  strokeWidth="3.5" 
+                  strokeLinecap="round"
+                />
+              </g>
             )}
 
             {/* First pair of leaves (Left & Right) - Visible from 25% */}
             {percentage >= 25 && (
               <g style={{ transition: "all 0.5s ease" }}>
+                {/* Branches connecting leaves */}
+                <path d="M 98 118 Q 86 117 84 116" fill="none" stroke="url(#stemGradient)" strokeWidth="3" strokeLinecap="round" />
+                <path d="M 99 110 Q 112 108 114 107" fill="none" stroke="url(#stemGradient)" strokeWidth="3" strokeLinecap="round" />
+
                 {/* Left Leaf (Dual Shading + Sway) */}
-                <g className="leaf-left-sway" style={{ transformOrigin: "98px 120px" }}>
-                  <path d="M 98 120 C 74 116, 68 100, 98 110 Z" fill="url(#leafGradient)" />
-                  <path d="M 98 120 C 74 124, 68 108, 98 110 Z" fill="#081c15" opacity="0.25" />
+                <g className="leaf-left-sway" style={{ transformOrigin: "84px 116px" }}>
+                  <path d="M 84 116 C 60 112, 54 96, 84 106 Z" fill="url(#leafGradient)" />
+                  <path d="M 84 116 C 60 120, 54 104, 84 106 Z" fill="#081c15" opacity="0.25" />
                 </g>
                 {/* Right Leaf (Dual Shading + Sway) */}
-                <g className="leaf-right-sway" style={{ transformOrigin: "102px 110px" }}>
-                  <path d="M 102 110 C 126 106, 132 90, 102 100 Z" fill="url(#leafGradient)" />
-                  <path d="M 102 110 C 126 114, 132 98, 102 100 Z" fill="#081c15" opacity="0.25" />
+                <g className="leaf-right-sway" style={{ transformOrigin: "114px 107px" }}>
+                  <path d="M 114 107 C 138 103, 144 87, 114 97 Z" fill="url(#leafGradient)" />
+                  <path d="M 114 107 C 138 111, 144 95, 114 97 Z" fill="#081c15" opacity="0.25" />
                 </g>
               </g>
             )}
@@ -179,15 +200,19 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
             {/* Second pair of leaves - Visible from 60% */}
             {percentage >= 60 && (
               <g style={{ transition: "all 0.5s ease" }}>
+                {/* Branches connecting leaves */}
+                <path d="M 99 74 Q 86 72 84 71" fill="none" stroke="url(#stemGradient)" strokeWidth="2.5" strokeLinecap="round" />
+                <path d="M 100 68 Q 112 66 114 65" fill="none" stroke="url(#stemGradient)" strokeWidth="2.5" strokeLinecap="round" />
+
                 {/* Upper Left Leaf */}
-                <g className="leaf-left-sway" style={{ transformOrigin: "98px 75px" }}>
-                  <path d="M 98 75 C 77 71, 71 58, 98 67 Z" fill="url(#leafGradient)" />
-                  <path d="M 98 75 C 77 79, 71 66, 98 67 Z" fill="#081c15" opacity="0.25" />
+                <g className="leaf-left-sway" style={{ transformOrigin: "84px 71px" }}>
+                  <path d="M 84 71 C 63 67, 57 54, 84 63 Z" fill="url(#leafGradient)" />
+                  <path d="M 84 71 C 63 75, 57 62, 84 63 Z" fill="#081c15" opacity="0.25" />
                 </g>
                 {/* Upper Right Leaf */}
-                <g className="leaf-right-sway" style={{ transformOrigin: "102px 70px" }}>
-                  <path d="M 102 70 C 123 66, 129 53, 102 62 Z" fill="url(#leafGradient)" />
-                  <path d="M 102 70 C 123 71, 129 58, 102 62 Z" fill="#081c15" opacity="0.25" />
+                <g className="leaf-right-sway" style={{ transformOrigin: "114px 65px" }}>
+                  <path d="M 114 65 C 135 61, 141 48, 114 57 Z" fill="url(#leafGradient)" />
+                  <path d="M 114 65 C 135 65, 141 52, 114 57 Z" fill="#081c15" opacity="0.25" />
                 </g>
               </g>
             )}
@@ -205,23 +230,28 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
             {percentage === 100 && (
               <g style={{ transformOrigin: "100px 36px" }}>
                 {/* Stem Connection */}
-                <line x1="100" y1="36" x2="100" y2="28" stroke="var(--color-sage)" strokeWidth="3" />
+                <line x1="100" y1="36" x2="100" y2="22" stroke="var(--color-sage)" strokeWidth="3" />
                 
-                {/* Organic Golden/Terracotta Blossom */}
-                <g style={{ transform: "translate(0, 5px)" }}>
-                  {/* Back Lotus Petals */}
-                  <path d="M 100 25 C 78 13, 72 -3, 92 -8 Z" fill="var(--color-terracotta)" opacity="0.85" />
-                  <path d="M 100 25 C 122 13, 128 -3, 108 -8 Z" fill="var(--color-terracotta)" opacity="0.85" />
-                  
-                  {/* Side Front Golden Petals */}
-                  <path d="M 100 25 C 82 13, 80 -1, 93 -3 Z" fill="var(--color-sand)" />
-                  <path d="M 100 25 C 118 13, 120 -1, 107 -3 Z" fill="var(--color-sand)" />
-                  
-                  {/* Center Main Lotus Petal */}
-                  <path d="M 100 25 C 91 8, 91 -2, 100 -9 C 109 -2, 109 8, 100 25 Z" fill="var(--color-sand)" />
-                  
+                {/* Upgraded Premium Blossom with symmetric rotated petals */}
+                <g style={{ transform: "translate(0, 7px)" }}>
+                  {/* Outer Petals */}
+                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(0 100 15)" />
+                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(72 100 15)" />
+                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(144 100 15)" />
+                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(216 100 15)" />
+                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(288 100 15)" />
+
+                  {/* Inner layer of petals (slightly offset and scaled down) */}
+                  <g transform="translate(100, 15) scale(0.68) translate(-100, -15)">
+                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(36 100 15)" />
+                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(108 100 15)" />
+                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(180 100 15)" />
+                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(252 100 15)" />
+                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(324 100 15)" />
+                  </g>
+
                   {/* Glowing Core center */}
-                  <circle cx="100" cy="8" r="4.5" fill="#ffffff" style={{ filter: "drop-shadow(0 0 5px #fff)" }} />
+                  <circle cx="100" cy="15" r="4.5" fill="#ffffff" style={{ filter: "drop-shadow(0 0 4px #fff)" }} />
                 </g>
                 
                 {/* Floating Star Sparkles */}
