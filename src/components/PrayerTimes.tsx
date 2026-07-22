@@ -75,6 +75,35 @@ export const PrayerTimes: React.FC = () => {
 
   const todayStr = new Date().toDateString();
 
+  const [sunan, setSunan] = useState<Record<string, boolean>>({
+    Fajr_pre: false,
+    Dhuhr_pre: false,
+    Dhuhr_post: false,
+    Maghrib_post: false,
+    Isha_post: false
+  });
+
+  // Load Sunan from LocalStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("tawazon_sunan");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.date === todayStr) {
+          setSunan(parsed.status || parsed);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [todayStr]);
+
+  const toggleSunnah = (key: string) => {
+    setSunan((prev) => {
+      const updated = { ...prev, [key]: !prev[key] };
+      localStorage.setItem("tawazon_sunan", JSON.stringify({ date: todayStr, status: updated }));
+      return updated;
+    });
+  };
+
   // Load Geolocation coordinates
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -226,6 +255,20 @@ export const PrayerTimes: React.FC = () => {
     playPreview(type);
   };
 
+  const sunanCompletedGroups = Object.values(sunan).filter(Boolean).length;
+  const sunanTotalGroups = 5;
+
+  const calculateSunanRakahs = () => {
+    let count = 0;
+    if (sunan.Fajr_pre) count += 2;
+    if (sunan.Dhuhr_pre) count += 4;
+    if (sunan.Dhuhr_post) count += 2;
+    if (sunan.Maghrib_post) count += 2;
+    if (sunan.Isha_post) count += 2;
+    return count;
+  };
+  const completedRakahs = calculateSunanRakahs();
+
   const doneCount = prayers.filter(p => p.name !== "Sunrise" && p.done).length;
   const totalObligatory = 5;
 
@@ -276,6 +319,9 @@ export const PrayerTimes: React.FC = () => {
           <div style={{ ...progressBarInner, width: `${(doneCount / totalObligatory) * 100}%` }} />
         </div>
         <p style={progressText}>{doneCount} من {totalObligatory} صلوات مكتملة اليوم</p>
+        <p style={sunanProgressText}>
+          السنن الرواتب: {sunanCompletedGroups} من {sunanTotalGroups} ({completedRakahs} ركعة من ١٢ ركعة)
+        </p>
       </div>
 
       {/* Grid: 2 Columns on desktop (Prayer List | Qibla Compass) */}
@@ -306,42 +352,98 @@ export const PrayerTimes: React.FC = () => {
                     key={p.name}
                     style={{
                       ...prayerRow,
+                      flexDirection: "column",
+                      alignItems: "stretch",
+                      gap: "10px",
                       ...(current ? currentRow : {}),
                       ...(isSunrise ? sunriseRow : {}),
                       opacity: isSunrise ? 0.65 : 1,
                     }}
                   >
-                    <div style={prayerLeft}>
-                      <span style={prayerIcon}>
-                        {renderPrayerIcon(p.name, current)}
-                      </span>
-                      <div>
-                        <p style={{ ...prayerName, color: current ? "var(--brand)" : "var(--text-main)" }}>
-                          {p.arabicName}
-                          {current && <span style={currentBadge}>الآن</span>}
-                        </p>
-                        <p style={{ ...prayerTime, color: past && !current ? "var(--text-muted)" : "var(--text-main)" }}>
-                          {p.time}
-                        </p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={prayerLeft}>
+                        <span style={prayerIcon}>
+                          {renderPrayerIcon(p.name, current)}
+                        </span>
+                        <div>
+                          <p style={{ ...prayerName, color: current ? "var(--brand)" : "var(--text-main)" }}>
+                            {p.arabicName}
+                            {current && <span style={currentBadge}>الآن</span>}
+                          </p>
+                          <p style={{ ...prayerTime, color: past && !current ? "var(--text-muted)" : "var(--text-main)" }}>
+                            {p.time}
+                          </p>
+                        </div>
                       </div>
+
+                      {!isSunrise && (
+                        <button
+                          onClick={() => toggleDone(idx)}
+                          style={{
+                            ...checkBtn,
+                            backgroundColor: p.done ? BRAND_COLOR : "transparent",
+                            borderColor: p.done ? BRAND_COLOR : "var(--bg-accent)",
+                          }}
+                          title={p.done ? "تمت الصلاة" : "تحديد كمكتمل"}
+                        >
+                          {p.done && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
                     </div>
 
-                    {!isSunrise && (
-                      <button
-                        onClick={() => toggleDone(idx)}
-                        style={{
-                          ...checkBtn,
-                          backgroundColor: p.done ? BRAND_COLOR : "transparent",
-                          borderColor: p.done ? BRAND_COLOR : "var(--bg-accent)",
-                        }}
-                        title={p.done ? "تمت الصلاة" : "تحديد كمكتمل"}
-                      >
-                        {p.done && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                    {/* Sunan Rawatib Sub-row */}
+                    {!isSunrise && (p.name === "Fajr" || p.name === "Dhuhr" || p.name === "Maghrib" || p.name === "Isha") && (
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", padding: "6px 8px", borderTop: "1px solid var(--bg-accent)", marginTop: "2px" }}>
+                        {p.name === "Fajr" && (
+                          <button
+                            onClick={() => toggleSunnah("Fajr_pre")}
+                            style={sunnahPillStyle(sunan.Fajr_pre)}
+                          >
+                            <span>{sunan.Fajr_pre ? "✓" : "○"}</span>
+                            <span>سنة قبلية (٢ ركعة)</span>
+                          </button>
                         )}
-                      </button>
+                        {p.name === "Dhuhr" && (
+                          <>
+                            <button
+                              onClick={() => toggleSunnah("Dhuhr_pre")}
+                              style={sunnahPillStyle(sunan.Dhuhr_pre)}
+                            >
+                              <span>{sunan.Dhuhr_pre ? "✓" : "○"}</span>
+                              <span>سنة قبلية (٤ ركعات)</span>
+                            </button>
+                            <button
+                              onClick={() => toggleSunnah("Dhuhr_post")}
+                              style={sunnahPillStyle(sunan.Dhuhr_post)}
+                            >
+                              <span>{sunan.Dhuhr_post ? "✓" : "○"}</span>
+                              <span>سنة بعدية (٢ ركعة)</span>
+                            </button>
+                          </>
+                        )}
+                        {p.name === "Maghrib" && (
+                          <button
+                            onClick={() => toggleSunnah("Maghrib_post")}
+                            style={sunnahPillStyle(sunan.Maghrib_post)}
+                          >
+                            <span>{sunan.Maghrib_post ? "✓" : "○"}</span>
+                            <span>سنة بعدية (٢ ركعة)</span>
+                          </button>
+                        )}
+                        {p.name === "Isha" && (
+                          <button
+                            onClick={() => toggleSunnah("Isha_post")}
+                            style={sunnahPillStyle(sunan.Isha_post)}
+                          >
+                            <span>{sunan.Isha_post ? "✓" : "○"}</span>
+                            <span>سنة بعدية (٢ ركعة)</span>
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -845,3 +947,27 @@ const playPreviewBtn: React.CSSProperties = {
   cursor: "pointer",
   transition: "all 0.2s ease",
 };
+
+const sunanProgressText: React.CSSProperties = {
+  margin: "4px 0 0",
+  fontSize: "11.5px",
+  color: "rgba(255,255,255,0.75)",
+  fontWeight: "700",
+};
+
+const sunnahPillStyle = (active: boolean): React.CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: "4px 10px",
+  borderRadius: "12px",
+  border: "1px solid",
+  borderColor: active ? "var(--brand)" : "var(--bg-accent)",
+  backgroundColor: active ? "var(--brand-light)" : "var(--bg-card)",
+  color: active ? "var(--brand)" : "var(--text-muted)",
+  fontSize: "11px",
+  fontWeight: "bold",
+  cursor: "pointer",
+  transition: "all 0.15s ease",
+  outline: "none",
+});
