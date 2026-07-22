@@ -148,33 +148,15 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
             {/* Stage 1+: Stem (Sprout) */}
             {percentage > 0 && (
               <path 
-                d="M 100 149 C 99 130, 97 115, 98 100" 
+                d="M 100 149 C 96 110, 104 70, 100 22" 
                 fill="none" 
                 stroke="url(#stemGradient)" 
-                strokeWidth="8" 
+                strokeWidth="5.5" 
                 strokeLinecap="round"
-                style={{ transition: "all 0.8s ease" }}
+                strokeDasharray="130"
+                strokeDashoffset={130 - (130 * percentage) / 100}
+                style={{ transition: "stroke-dashoffset 0.8s ease-in-out" }}
               />
-            )}
-
-            {/* Stage 3+: Upper Stem */}
-            {percentage > 50 && (
-              <g style={{ transition: "all 0.8s ease" }}>
-                <path 
-                  d="M 98 100 C 99 85, 101 70, 100 55" 
-                  fill="none" 
-                  stroke="url(#stemGradient)" 
-                  strokeWidth="5" 
-                  strokeLinecap="round"
-                />
-                <path 
-                  d="M 100 55 C 99 45, 101 32, 100 22" 
-                  fill="none" 
-                  stroke="url(#stemGradient)" 
-                  strokeWidth="3.5" 
-                  strokeLinecap="round"
-                />
-              </g>
             )}
 
             {/* First pair of leaves (Left & Right) - Visible from 25% */}
