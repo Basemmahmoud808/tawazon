@@ -16,91 +16,7 @@ interface HistoryArchiveProps {
 
 const BRAND_COLOR = "#1a6b4a";
 
-// Consistent Vector Emotion Icons
-const MoodIcon: React.FC<{ type?: "energetic" | "happy" | "calm" | "tired" | "anxious"; size?: number }> = ({ type, size = 24 }) => {
-  if (!type) {
-    return (
-      <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="16" cy="16" r="13" />
-        <circle cx="12" cy="14" r="1" fill="currentColor" />
-        <circle cx="20" cy="14" r="1" fill="currentColor" />
-        <path d="M12 21a4 4 0 0 1 8 0" />
-      </svg>
-    );
-  }
-
-  switch (type) {
-    case "energetic":
-      return (
-        <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="16" cy="16" r="13" />
-          <path d="M10 13a2.5 2.5 0 0 1 4 0M18 13a2.5 2.5 0 0 1 4 0" />
-          <path d="M11 20c2 3 8 3 10 0" fill="currentColor" />
-        </svg>
-      );
-    case "happy":
-      return (
-        <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="16" cy="16" r="13" />
-          <path d="M9 16q3-3 6 0M17 16q3-3 6 0" />
-          <path d="M12 20q4 3 8 0" />
-        </svg>
-      );
-    case "calm":
-      return (
-        <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="16" cy="16" r="13" />
-          <line x1="10" y1="15" x2="13" y2="15" />
-          <line x1="19" y1="15" x2="22" y2="15" />
-          <line x1="13" y1="21" x2="19" y2="21" />
-        </svg>
-      );
-    case "tired":
-      return (
-        <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="16" cy="16" r="13" />
-          <path d="M10 13l3 2M22 13l-3 2" />
-          <circle cx="16" cy="21" r="2.5" fill="currentColor" />
-        </svg>
-      );
-    case "anxious":
-      return (
-        <svg width={size} height={size} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="16" cy="16" r="13" />
-          <path d="M10 15a2 2 0 0 1 4 0M18 15a2 2 0 0 1 4 0" />
-          <path d="M11 21a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-};
-
 export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
-  const getMoodLabel = (type?: DailyLog["mood"]) => {
-    if (!type) return "غير مسجل";
-    switch (type) {
-      case "energetic": return "نشيط";
-      case "happy": return "سعيد";
-      case "calm": return "هادئ";
-      case "tired": return "متعب";
-      case "anxious": return "قلق";
-      default: return "";
-    }
-  };
-
-  const getMoodColor = (type?: DailyLog["mood"]) => {
-    if (!type) return "var(--text-muted)";
-    switch (type) {
-      case "energetic": return "var(--color-sand)";
-      case "happy": return "var(--color-sage)";
-      case "calm": return "var(--color-meditate)";
-      case "tired": return "var(--text-muted)";
-      case "anxious": return "var(--color-terracotta)";
-      default: return "var(--text-muted)";
-    }
-  };
-
   // Generate 12-week Heatmap Grid data (84 days)
   const getHeatmapData = () => {
     const data = [];
@@ -126,15 +42,6 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
   };
 
   const heatmapDays = getHeatmapData();
-
-  // Mood statistics calculation
-  const totalLogs = logs.filter(l => l.mood).length;
-  const moodCounts = { energetic: 0, happy: 0, calm: 0, tired: 0, anxious: 0 };
-  logs.forEach(l => {
-    if (l.mood && l.mood in moodCounts) {
-      moodCounts[l.mood]++;
-    }
-  });
 
   return (
     <div style={archiveLayoutWrapperStyle}>
@@ -189,40 +96,6 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
         </div>
       </div>
 
-      {/* ── Mood Statistics ── */}
-      <div className="card" style={statsCardStyle}>
-        <h3 style={statsTitleStyle}>تحليل الحالة المزاجية</h3>
-        
-        {totalLogs === 0 ? (
-          <p style={{ margin: 0, fontSize: "13px", color: "var(--text-muted)", fontStyle: "italic" }}>
-            لا توجد إحصائيات كافية للمزاج حالياً. قم بتسجيل مزاجك اليومي في الصفحة الرئيسية.
-          </p>
-        ) : (
-          <div style={chartContainerStyle}>
-            {(["happy", "energetic", "calm", "tired", "anxious"] as const).map((m) => {
-              const count = moodCounts[m];
-              const pct = totalLogs > 0 ? (count / totalLogs) * 100 : 0;
-              const color = getMoodColor(m);
-
-              return (
-                <div key={m} style={chartRowStyle}>
-                  <span style={chartLabelStyle}>
-                    <MoodIcon type={m} size={16} />
-                    <span style={{ marginRight: "6px", fontSize: "12px", fontWeight: "700" }}>{getMoodLabel(m)}</span>
-                  </span>
-                  <div style={chartTrackStyle}>
-                    <div style={{ ...chartFillStyle, width: `${pct}%`, backgroundColor: color }} />
-                  </div>
-                  <span style={chartValueStyle}>
-                    {count} مرات ({Math.round(pct)}%)
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       {/* ── Detailed Timeline Logs ── */}
       <div style={{ marginTop: "8px" }}>
         <h3 style={statsTitleStyle}>الأيام والسجلات السابقة</h3>
@@ -238,8 +111,6 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
             {logs.map((log) => {
               // Calculate completion percentage
               const pct = log.totalHabits > 0 ? (log.completedHabits.length / log.totalHabits) * 100 : 0;
-              const hasMood = !!log.mood;
-              const moodCol = getMoodColor(log.mood);
 
               return (
                 <div key={log.id} style={timelineItemStyle}>
@@ -247,28 +118,18 @@ export const HistoryArchive: React.FC<HistoryArchiveProps> = ({ logs }) => {
                   {/* Left timeline indicator */}
                   <div style={{
                     ...timelineIndicatorStyle,
-                    backgroundColor: hasMood ? moodCol : "var(--bg-accent)",
-                    color: hasMood ? "white" : "var(--text-muted)"
+                    backgroundColor: "var(--brand)",
+                    color: "white"
                   }}>
-                    <MoodIcon type={log.mood} size={16} />
+                    🌿
                   </div>
 
                   {/* Daily Log Card content */}
                   <div style={logCardStyle}>
                     
-                    {/* Date and mood badge header */}
+                    {/* Date header */}
                     <div style={logHeaderStyle}>
                       <span style={logDateStyle}>{log.dateString}</span>
-                      {hasMood && (
-                        <span style={{
-                          ...moodBadgeStyle,
-                          borderColor: moodCol + "40",
-                          color: moodCol,
-                          backgroundColor: moodCol + "08",
-                        }}>
-                          المزاج: {getMoodLabel(log.mood)}
-                        </span>
-                      )}
                     </div>
 
                     {/* Habits section */}
@@ -337,63 +198,11 @@ const gardenCardStyle: React.CSSProperties = {
   boxShadow: "var(--shadow-card)",
 };
 
-const statsCardStyle: React.CSSProperties = {
-  padding: "20px",
-  backgroundColor: "var(--bg-card)",
-  border: "1px solid var(--bg-accent)",
-  borderRadius: "16px",
-  boxShadow: "var(--shadow-card)",
-};
-
 const statsTitleStyle: React.CSSProperties = {
   margin: "0 0 4px",
   fontSize: "15px",
   fontWeight: "800",
   color: "var(--text-main)",
-};
-
-const chartContainerStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "12px",
-  marginTop: "16px",
-};
-
-const chartRowStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-};
-
-const chartLabelStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  width: "80px",
-  flexShrink: 0,
-};
-
-const chartTrackStyle: React.CSSProperties = {
-  flex: 1,
-  height: "8px",
-  backgroundColor: "var(--bg-accent)",
-  borderRadius: "4px",
-  overflow: "hidden",
-  position: "relative",
-};
-
-const chartFillStyle: React.CSSProperties = {
-  height: "100%",
-  borderRadius: "4px",
-  transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-};
-
-const chartValueStyle: React.CSSProperties = {
-  fontSize: "12px",
-  width: "85px",
-  textAlign: "left",
-  flexShrink: 0,
-  fontWeight: "600",
-  color: "var(--text-muted)",
 };
 
 const emptyStateStyle: React.CSSProperties = {
@@ -464,13 +273,6 @@ const logDateStyle: React.CSSProperties = {
   color: "var(--text-main)",
 };
 
-const moodBadgeStyle: React.CSSProperties = {
-  fontSize: "11px",
-  fontWeight: "700",
-  padding: "2px 8px",
-  borderRadius: "8px",
-  border: "1px solid",
-};
 
 const habitsContainerStyle: React.CSSProperties = {
   display: "flex",

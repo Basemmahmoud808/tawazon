@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect } from "react";
+import React, { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { useLocalStorage, obfuscate, deobfuscate } from "./hooks/useLocalStorage";
 import { useAdminGuard } from "./hooks/useAdminGuard";
 import type { Habit } from "./components/HabitTracker";
@@ -113,6 +113,8 @@ export default function App() {
   const [userName, setUserName] = useLocalStorage<string>("tawazon_user_name", "");
   const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
   const [notifiedCompletionToday, setNotifiedCompletionToday] = useLocalStorage<string>("tawazon_last_notified_date", "");
+  const [todayNote, setTodayNote] = useState<string>("");
+  const [isSavedRecently, setIsSavedRecently] = useState<boolean>(false);
 
   // Send desktop notification when all habits are completed
   const completedCount = habits.filter((h) => h.completed).length;
@@ -572,8 +574,19 @@ export default function App() {
     setHabits(updated);
   };
 
-  // Sync completion logs to daily logs
+  // Load today's note once dailyLogs are initialized
+  const hasInitializedNote = useRef(false);
   useEffect(() => {
+    if (!initialLoaded || hasInitializedNote.current) return;
+    const todayRaw = new Date().toDateString();
+    const todayLog = dailyLogs.find((l) => l.rawDate === todayRaw);
+    if (todayLog) {
+      setTodayNote(todayLog.note || "");
+      hasInitializedNote.current = true;
+    }
+  }, [dailyLogs, initialLoaded]);
+
+  const handleSaveDay = () => {
     if (!isLoggedIn) return;
     const todayRaw = new Date().toDateString();
     const todayEG = new Date().toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -585,10 +598,10 @@ export default function App() {
         id: existingIdx >= 0 ? prevLogs[existingIdx].id : Date.now().toString(),
         dateString: todayEG,
         rawDate: todayRaw,
-        mood: existingIdx >= 0 ? prevLogs[existingIdx].mood : "calm",
-        note: existingIdx >= 0 ? prevLogs[existingIdx].note : "",
+        mood: "calm",
+        note: todayNote,
         completedHabits: completedList,
-        totalHabits: totalCount,
+        totalHabits: habits.length,
       };
 
       const updated = [...prevLogs];
@@ -599,7 +612,10 @@ export default function App() {
       }
       return updated;
     });
-  }, [habits, isLoggedIn, totalCount, setDailyLogs]);
+
+    setIsSavedRecently(true);
+    setTimeout(() => setIsSavedRecently(false), 3000);
+  };
 
   useEffect(() => {
     if (!isLoggedIn || totalCount === 0) return;
@@ -946,6 +962,59 @@ export default function App() {
                         إضافة
                       </button>
                     </form>
+
+                    {/* Daily Note & Save Button Section */}
+                    <div style={{ 
+                      display: "flex", 
+                      flexDirection: "column", 
+                      gap: "10px", 
+                      marginTop: "16px", 
+                      padding: "16px", 
+                      backgroundColor: "var(--bg-primary)", 
+                      borderRadius: "12px", 
+                      border: "1px solid var(--bg-accent)" 
+                    }}>
+                      <h5 style={{ margin: 0, fontSize: "13px", fontWeight: "bold", color: "var(--text-main)", textAlign: "right" }}>
+                        كتابة مذكرة أو رسالة لليوم 📝
+                      </h5>
+                      <textarea
+                        value={todayNote}
+                        onChange={(e) => setTodayNote(e.target.value)}
+                        placeholder="اكتب مذكراتك أو امتنانك لليوم هنا..."
+                        rows={3}
+                        maxLength={300}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--bg-accent)",
+                          backgroundColor: "var(--bg-card)",
+                          color: "var(--text-main)",
+                          fontFamily: "inherit",
+                          fontSize: "12.5px",
+                          outline: "none",
+                          resize: "none",
+                          textAlign: "right"
+                        }}
+                      />
+                      <button
+                        onClick={handleSaveDay}
+                        style={{
+                          backgroundColor: "var(--brand)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          padding: "10px 16px",
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          textAlign: "center"
+                        }}
+                      >
+                        {isSavedRecently ? "تم حفظ اليوم بنجاح! 🌿" : "حفظ المذكرات والعادات"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
