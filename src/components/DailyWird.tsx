@@ -195,11 +195,21 @@ const QuranTracker: React.FC = () => {
   const [bookmark, setBookmark] = useState<number | null>(() => {
     try {
       const saved = localStorage.getItem(BOOKMARK_KEY);
-      return saved ? Number(saved) : null;
+      return saved ? Math.min(Number(saved), 604) : null;
     } catch {
       return null;
     }
   });
+
+  // Clamp activePage to maximum 604 pages of Madinah Mushaf
+  useEffect(() => {
+    if (activePage > 604) {
+      setActivePage(604);
+      setActiveSurahNum(114);
+    }
+  }, [activePage]);
+
+  const safePage = Math.min(Math.max(activePage, 1), 604);
 
   const [tafsirAyahs, setTafsirAyahs] = useState<{ number: number; text: string }[]>([]);
   const [loadingTafsir, setLoadingTafsir] = useState(false);
@@ -211,7 +221,7 @@ const QuranTracker: React.FC = () => {
     setTafsirError("");
     setTafsirAyahs([]);
     
-    fetch(`https://api.alquran.cloud/v1/page/${activePage}/ar.muyassar`)
+    fetch(`https://api.alquran.cloud/v1/page/${safePage}/ar.muyassar`)
       .then(res => {
         if (!res.ok) throw new Error("فشل تحميل التفسير");
         return res.json();
@@ -234,7 +244,7 @@ const QuranTracker: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [activePage]);
+  }, [safePage]);
 
   useEffect(() => {
     localStorage.setItem(QURAN_KEY, JSON.stringify(quran));
@@ -593,8 +603,12 @@ const QuranTracker: React.FC = () => {
               border: "1px solid #d4ccb6"
             }}>
               <img
-                src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${activePage.toString().padStart(3, '0')}.png`}
-                alt={`مصحف المدينة صفحة ${activePage}`}
+                src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${safePage.toString().padStart(3, '0')}.png`}
+                alt={`مصحف المدينة صفحة ${safePage}`}
+                onError={(e: any) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://everyayah.com/data/quranpages/page${safePage.toString().padStart(3, '0')}.png`;
+                }}
                 style={{
                   width: "100%",
                   height: "auto",
@@ -607,11 +621,11 @@ const QuranTracker: React.FC = () => {
 
             {/* Hidden Image Preloader for instant page turning */}
             <div style={{ display: "none" }}>
-              {activePage < 604 && (
-                <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 1).toString().padStart(3, '0')}.png`} />
+              {safePage < 604 && (
+                <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(safePage + 1).toString().padStart(3, '0')}.png`} />
               )}
-              {activePage < 603 && (
-                <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage + 2).toString().padStart(3, '0')}.png`} />
+              {safePage < 603 && (
+                <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(safePage + 2).toString().padStart(3, '0')}.png`} />
               )}
               {activePage > 1 && (
                 <img src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${(activePage - 1).toString().padStart(3, '0')}.png`} />
