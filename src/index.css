@@ -1268,3 +1268,65 @@ body.dark-mode .login-theme-toggle {
   width: 100%;
 }
 
+/* ── Mushaf Responsive Styles ── */
+.wird-mushaf-card {
+  padding: 24px !important;
+}
+
+.mushaf-page-frame {
+  flex: 1 1 480px;
+  max-width: 500px;
+  background-color: #f7f5ed;
+  border-radius: 16px;
+  padding: 16px;
+  border: 2px solid #e5dec9;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.mushaf-image-container {
+  max-width: 100%;
+  width: 100%;
+  background-color: white;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d4ccb6;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1.42;
+}
+
+.mushaf-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: contrast(1.05) saturate(0.95);
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .wird-mushaf-card {
+    padding: 12px 8px !important;
+    border-radius: 16px !important;
+  }
+  .mushaf-page-frame {
+    padding: 8px !important;
+    border-radius: 12px !important;
+    gap: 12px !important;
+  }
+  .mushaf-image-container {
+    border-radius: 6px !important;
+  }
+}
+
+

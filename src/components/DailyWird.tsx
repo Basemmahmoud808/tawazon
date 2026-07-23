@@ -454,7 +454,7 @@ const QuranTracker: React.FC = () => {
       </div>
 
       {/* Embedded 100% Authentic Madinah Mushaf (King Fahd Complex Scanned Pages) */}
-      <div className="card" style={{ padding: "24px", borderRadius: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid var(--bg-accent)", boxShadow: "var(--shadow-sm)" }}>
+      <div className="card wird-mushaf-card" style={{ borderRadius: "20px", display: "flex", flexDirection: "column", gap: "16px", border: "1px solid var(--bg-accent)", boxShadow: "var(--shadow-sm)" }}>
         
         {/* Mushaf Header Row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", borderBottom: "1px solid var(--bg-accent)", paddingBottom: "16px" }}>
@@ -470,15 +470,15 @@ const QuranTracker: React.FC = () => {
               🔖 حفظ العلامة
             </button>
             {bookmark && (
-              <button onClick={handleLoadBookmark} style={bookmarkJumpBtn}>
-                انتقل للعلامة (صفحة {bookmark})
+              <button onClick={handleLoadBookmark} style={bookmarkJumpBtn} title="انتقل إلى علامة القراءة المحفوظة">
+                📖 الانتقال للعلامة ({bookmark})
               </button>
             )}
           </div>
         </div>
 
-        {/* Surah List & Selector Dropdown */}
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+        {/* Search and Navigation dropdown */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div style={{ flex: 1, minWidth: "200px" }}>
             <select
               value={activeSurahNum}
@@ -574,34 +574,9 @@ const QuranTracker: React.FC = () => {
         }}>
           
           {/* Left/Center Column: Mushaf Page Frame */}
-          <div style={{
-            flex: "1 1 480px",
-            maxWidth: "500px",
-            backgroundColor: "#f7f5ed", // warm paper page color
-            borderRadius: "16px",
-            padding: "16px",
-            border: "2px solid #e5dec9",
-            boxShadow: "inset 0 4px 12px rgba(0,0,0,0.06)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "16px",
-            position: "relative"
-          }}>
+          <div className="mushaf-page-frame">
             {/* Page Image */}
-            <div style={{
-              maxWidth: "100%",
-              width: "480px",
-              minHeight: "500px",
-              backgroundColor: "white",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-              borderRadius: "8px",
-              overflow: "hidden",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px solid #d4ccb6"
-            }}>
+            <div className="mushaf-image-container">
               <img
                 src={`https://cdn.jsdelivr.net/gh/GovarJabbar/Quran-PNG@master/${safePage.toString().padStart(3, '0')}.png`}
                 alt={`مصحف المدينة صفحة ${safePage}`}
@@ -609,12 +584,7 @@ const QuranTracker: React.FC = () => {
                   e.target.onerror = null;
                   e.target.src = `https://everyayah.com/data/quranpages/page${safePage.toString().padStart(3, '0')}.png`;
                 }}
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  display: "block",
-                  filter: "contrast(1.05) saturate(0.95)"
-                }}
+                className="mushaf-image"
                 loading="eager"
               />
             </div>
