@@ -1,0 +1,58 @@
+{
+  "name": "توازن — مساحتك للارتقاء الروحي والذاتي",
+  "short_name": "توازن",
+  "description": "تتبع أوقات صلاتك، اقرأ وردك اليومي، حافظ على أذكار الصباح والمساء، وابدأ تحدي الـ 90 يوماً لبناء العادات.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFBF7",
+  "theme_color": "#115B3D",
+  "lang": "ar",
+  "dir": "rtl",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["lifestyle", "health", "religion"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23115B3D'/><text y='.9em' font-size='70' x='15'>🌿</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "توازن — لوحة التحكم الرئيسية"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الأذكار",
+      "short_name": "أذكار",
+      "description": "أذكار الصباح والمساء",
+      "url": "/?tab=athkar",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "أوقات الصلاة",
+      "short_name": "الصلوات",
+      "description": "مواقيت الصلاة",
+      "url": "/?tab=prayer",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

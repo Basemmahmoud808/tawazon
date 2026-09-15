@@ -86,8 +86,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
   return (
     <div className="login-wrapper">
-      <button 
-        onClick={onToggleTheme} 
+      <button
+        onClick={onToggleTheme}
         className="login-theme-toggle emoji-accent"
         title={theme === "dark" ? "الوضع المضيء" : "الوضع الداكن"}
       >
@@ -113,6 +113,31 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
           <>
             {errorMsg && <div className="login-error-alert">{errorMsg}</div>}
 
+            {/* ─── زر الضيف أولاً — أقل احتكاك للمستخدم الجديد ─── */}
+            <button
+              onClick={handleGuestLogin}
+              className="login-guest-btn"
+              style={{ marginBottom: "6px" }}
+            >
+              🚀 ادخل الآن بدون تسجيل
+            </button>
+            <p style={{
+              textAlign: "center",
+              fontSize: "11px",
+              color: "var(--text-muted)",
+              margin: "0 0 16px",
+              lineHeight: 1.6,
+            }}>
+              بياناتك محفوظة على جهازك • سجّل لاحقاً لمزامنة بياناتك على كل أجهزتك
+            </p>
+
+            <div className="login-divider">
+              <span className="login-divider-line" />
+              <span className="login-divider-text">أو سجّل للمزامنة</span>
+              <span className="login-divider-line" />
+            </div>
+
+            {/* ─── نموذج البريد الإلكتروني ─── */}
             <form onSubmit={handleEmailSubmit} className="login-form">
               {isRegistering && (
                 <div className="login-input-group">
@@ -127,7 +152,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                   />
                 </div>
               )}
-              
+
               <div className="login-input-group">
                 <label className="login-label">البريد الإلكتروني</label>
                 <input
@@ -162,20 +187,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                   onClick={() => { setIsRegistering(!isRegistering); setErrorMsg(""); }}
                   className="login-toggle-link"
                 >
-                  {isRegistering ? "لديك حساب بالفعل؟ سجل دخولك" : "ليس لديك حساب؟ سجل حساباً جديداً"}
+                  {isRegistering ? "لديك حساب بالفعل؟ سجل دخولك" : "ليس لديك حساب؟ أنشئ حساباً"}
                 </button>
               </div>
             </form>
-
-            <div className="login-divider">
-              <span className="login-divider-line" />
-              <span className="login-divider-text">أو</span>
-              <span className="login-divider-line" />
-            </div>
-
-            <button onClick={handleGuestLogin} className="login-guest-btn">
-              الاستمرار كضيف (تخطي التسجيل)
-            </button>
           </>
         )}
       </div>
