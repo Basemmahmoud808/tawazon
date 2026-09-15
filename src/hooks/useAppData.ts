@@ -6,7 +6,7 @@
  *
  * الأولوية: LocalStorage (offline-first) ← Firestore (online sync)
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { obfuscate, deobfuscate } from "./useLocalStorage";
@@ -56,14 +56,14 @@ export function useAppData(userId: string) {
    */
   const [isDataReady, setIsDataReady] = useState(false);
 
-  // Keys مبنية على userId لعزل بيانات كل مستخدم
-  const keys = {
-    habits:    `tawazon_${userId}_habits`,
-    days:      `tawazon_${userId}_90day_completion_v6`,
-    start:     `tawazon_${userId}_90day_start_date`,
-    title:     `tawazon_${userId}_90day_challenge_title`,
-    logs:      `tawazon_${userId}_daily_logs`,
-  };
+  // Keys مبنية على userId — memoized لمنع إعادة الحساب في كل render
+  const keys = useMemo(() => ({
+    habits: `tawazon_${userId}_habits`,
+    days:   `tawazon_${userId}_90day_completion_v6`,
+    start:  `tawazon_${userId}_90day_start_date`,
+    title:  `tawazon_${userId}_90day_challenge_title`,
+    logs:   `tawazon_${userId}_daily_logs`,
+  }), [userId]);
 
   // ─── تحميل عند تغيير المستخدم ──────────────────────────────────────────────
   useEffect(() => {
@@ -71,59 +71,46 @@ export function useAppData(userId: string) {
     setIsDataReady(false);
 
     // 1. تحميل من LocalStorage أولاً (فوري)
-    const loadedHabits    = lsGet<Habit[]>(keys.habits, DEFAULT_HABITS);
-    const loadedDays      = lsGet<boolean[]>(keys.days, Array(90).fill(false));
-    const loadedStart     = lsGet<string>(keys.start, new Date().toISOString());
-    const loadedTitle     = lsGet<string>(keys.title, "التزام بالرياضة والقراءة اليومية");
-    const loadedLogs      = lsGet<DailyLog[]>(keys.logs, []);
+    const loadedHabits = lsGet<Habit[]>(keys.habits, DEFAULT_HABITS);
+    const loadedDays   = lsGet<boolean[]>(keys.days, Array(90).fill(false));
+    const loadedStart  = lsGet<string>(keys.start, new Date().toISOString());
+    const loadedTitle  = lsGet<string>(keys.title, "التزام بالرياضة والقراءة اليومية");
+    const loadedLogs   = lsGet<DailyLog[]>(keys.logs, []);
 
     setHabitsRaw(loadedHabits);
     setDaysCompletedRaw(loadedDays);
     setChallengeStartDateRaw(loadedStart);
     setChallengeTitleRaw(loadedTitle);
     setDailyLogsRaw(loadedLogs);
-
-    // البيانات جاهزة — يمكن الكتابة الآن
-    setIsDataReady(true);
+    setIsDataReady(true); // البيانات جاهزة — يمكن الكتابة الآن
 
     // 2. مزامنة من Firestore (خلفية، بدون تجميد UI)
     if (userId !== "guest" && db) {
       const docRef = doc(db, "users", userId);
       getDoc(docRef).then((snap) => {
         if (!snap.exists()) {
-          // مستخدم جديد — نرفع البيانات المحلية
-          setDoc(docRef, {
-            habits: loadedHabits,
-            daysCompleted: loadedDays,
-            challengeStartDate: loadedStart,
-            challengeTitle: loadedTitle,
-            dailyLogs: loadedLogs,
-            updatedAt: Date.now(),
-          }).catch(() => {});
+          setDoc(docRef, { habits: loadedHabits, daysCompleted: loadedDays, challengeStartDate: loadedStart, challengeTitle: loadedTitle, dailyLogs: loadedLogs, updatedAt: Date.now() }).catch(() => {});
           return;
         }
         const d = snap.data();
-        // نحدّث الـ state إذا وجدنا بيانات جديدة من Firestore
-        if (d.habits)            { setHabitsRaw(d.habits); lsSet(keys.habits, d.habits); }
-        if (d.daysCompleted)     { setDaysCompletedRaw(d.daysCompleted); lsSet(keys.days, d.daysCompleted); }
+        if (d.habits)            { setHabitsRaw(d.habits);                       lsSet(keys.habits, d.habits); }
+        if (d.daysCompleted)     { setDaysCompletedRaw(d.daysCompleted);         lsSet(keys.days, d.daysCompleted); }
         if (d.challengeStartDate){ setChallengeStartDateRaw(d.challengeStartDate); lsSet(keys.start, d.challengeStartDate); }
-        if (d.challengeTitle)    { setChallengeTitleRaw(d.challengeTitle); lsSet(keys.title, d.challengeTitle); }
-        if (d.dailyLogs)         { setDailyLogsRaw(d.dailyLogs); lsSet(keys.logs, d.dailyLogs); }
+        if (d.challengeTitle)    { setChallengeTitleRaw(d.challengeTitle);       lsSet(keys.title, d.challengeTitle); }
+        if (d.dailyLogs)         { setDailyLogsRaw(d.dailyLogs);                 lsSet(keys.logs, d.dailyLogs); }
       }).catch(() => {});
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, keys]);
 
   // ─── Helper: حفظ إلى LS + Firestore ─────────────────────────────────────────
   const persist = (field: string, lsKey: string, value: unknown) => {
     lsSet(lsKey, value);
     if (userId !== "guest" && db) {
-      const docRef = doc(db, "users", userId);
-      setDoc(docRef, { [field]: value, updatedAt: Date.now() }, { merge: true }).catch(() => {});
+      setDoc(doc(db, "users", userId), { [field]: value, updatedAt: Date.now() }, { merge: true }).catch(() => {});
     }
   };
 
-  // مرجع لمنع الكتابة قبل اكتمال التحميل
+  // ponytail: readyRef يمنع الكتابة أثناء التحميل الأولي — بديل setTimeout(1200ms)
   const readyRef = useRef(false);
   useEffect(() => { readyRef.current = isDataReady; }, [isDataReady]);
 

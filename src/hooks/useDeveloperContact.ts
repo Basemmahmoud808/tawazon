@@ -6,7 +6,7 @@
  * - إرسال عبر Firestore + FormSubmit (Email)
  * - إرسال مباشر عبر واتساب أو إيميل
  */
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
@@ -25,6 +25,10 @@ export function useDeveloperContact(userId: string, userName: string) {
   const [contact, setContact]         = useState("");
   const [sending, setSending]         = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // cleanup on unmount
+  useEffect(() => () => { if (resetTimer.current) clearTimeout(resetTimer.current); }, []);
 
   // ─── إرسال عبر النموذج (Firestore + FormSubmit) ─────────────────────────
   const submit = async (e: React.FormEvent): Promise<void> => {
@@ -70,7 +74,7 @@ export function useDeveloperContact(userId: string, userName: string) {
       setSentSuccess(true);
       setMsgText("");
       setContact("");
-      setTimeout(() => setSentSuccess(false), 2500);
+      resetTimer.current = setTimeout(() => setSentSuccess(false), 2500);
     } catch {
       alert("حدث خطأ أثناء الإرسال. يرجى المحاولة لاحقاً.");
     } finally {
