@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  updateProfile 
+  updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -16,6 +17,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [emailName, setEmailName] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         return "كلمة المرور ضعيفة جداً. يجب أن تتكون من 6 خانات على الأقل.";
       case "auth/too-many-requests":
         return "تم إرسال طلبات كثيرة جداً بشكل مؤقت. الرجاء المحاولة لاحقاً.";
+      case "auth/network-request-failed":
+        return "تعذر الاتصال بالإنترنت. تحقق من الاتصال وحاول مرة أخرى.";
+      case "auth/operation-not-allowed":
+        return "تسجيل البريد الإلكتروني غير مفعّل في إعدادات الموقع.";
       default:
         return "حدث خطأ غير متوقع. الرجاء المحاولة لاحقاً.";
     }
@@ -46,13 +52,31 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-    if (!auth) {
-      if (!email && !emailName) {
-        setErrorMsg("الرجاء إدخال الاسم أو البريد الإلكتروني للتسجيل المحلي.");
+    if (isResettingPassword) {
+      if (!auth) {
+        setErrorMsg("خدمة الحسابات غير متاحة حالياً. حاول لاحقاً.");
         return;
       }
-      const displayName = emailName.trim() || (email ? email.split("@")[0] : "مستخدم توازن");
-      onLoginSuccess(displayName, "email");
+      if (!email) {
+        setErrorMsg("اكتب بريدك الإلكتروني أولاً.");
+        return;
+      }
+      setLoading(true);
+      setLoadingMessage("جاري إرسال رابط استعادة كلمة المرور...");
+      try {
+        await sendPasswordResetEmail(auth, email);
+        setErrorMsg("تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني.");
+        setIsResettingPassword(false);
+      } catch (error: unknown) {
+        const code = error instanceof Error && "code" in error ? String(error.code) : "";
+        setErrorMsg(getArabicErrorMessage(code));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+    if (!auth) {
+      setErrorMsg("خدمة الحسابات غير متاحة حالياً. جرّب الدخول كضيف أو حاول لاحقاً.");
       return;
     }
     if (!email || !password) {
@@ -73,8 +97,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         onLoginSuccess(userCredential.user.displayName || email.split("@")[0], "email");
       }
-    } catch (error: any) {
-      setErrorMsg(getArabicErrorMessage(error.code));
+    } catch (error: unknown) {
+      const code = error instanceof Error && "code" in error ? String(error.code) : "";
+      setErrorMsg(getArabicErrorMessage(code));
     } finally {
       setLoading(false);
     }
@@ -139,7 +164,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
             {/* ─── نموذج البريد الإلكتروني ─── */}
             <form onSubmit={handleEmailSubmit} className="login-form">
-              {isRegistering && (
+              {!isResettingPassword && isRegistering && (
                 <div className="login-input-group">
                   <label className="login-label">الاسم الشخصي</label>
                   <input
@@ -165,7 +190,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                 />
               </div>
 
-              <div className="login-input-group">
+              {!isResettingPassword && <div className="login-input-group">
                 <label className="login-label">كلمة المرور</label>
                 <input
                   type="password"
@@ -175,20 +200,29 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                   className="login-input"
                   required
                 />
-              </div>
+              </div>}
 
               <button type="submit" className="login-submit-btn">
-                {isRegistering ? "إنشاء حساب جديد ودخول" : "تسجيل الدخول"}
+                {isResettingPassword ? "إرسال رابط الاستعادة" : isRegistering ? "إنشاء حساب جديد ودخول" : "تسجيل الدخول"}
               </button>
 
               <div style={{ textAlign: "center", marginTop: "12px" }}>
                 <button
                   type="button"
-                  onClick={() => { setIsRegistering(!isRegistering); setErrorMsg(""); }}
+                  onClick={() => { setIsResettingPassword(!isResettingPassword); setIsRegistering(false); setErrorMsg(""); }}
                   className="login-toggle-link"
                 >
-                  {isRegistering ? "لديك حساب بالفعل؟ سجل دخولك" : "ليس لديك حساب؟ أنشئ حساباً"}
+                  {isResettingPassword ? "العودة لتسجيل الدخول" : "نسيت كلمة المرور؟"}
                 </button>
+                {!isResettingPassword && (
+                  <button
+                    type="button"
+                    onClick={() => { setIsRegistering(!isRegistering); setErrorMsg(""); }}
+                    className="login-toggle-link"
+                  >
+                    {isRegistering ? "لديك حساب بالفعل؟ سجل دخولك" : "ليس لديك حساب؟ أنشئ حساباً"}
+                  </button>
+                )}
               </div>
             </form>
           </>

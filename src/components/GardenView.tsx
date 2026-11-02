@@ -11,8 +11,8 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
   const isDark = theme === "dark";
 
   return (
-    <div 
-      className="card garden-card" 
+    <div
+      className="card garden-card"
       style={{
         ...gardenCardStyle,
         background: isDark 
@@ -27,21 +27,26 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
         transition: "background 0.5s ease, border-color 0.5s ease"
       }}
     >
-      <h3 style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+      <div style={gardenHeaderStyle}>
+        <div>
+          <h3 style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--color-sage)" }}>
           <path d="M12 10a6 6 0 0 0-6-6H3v3a6 6 0 0 0 6 6h3Z" />
           <path d="M12 10a6 6 0 0 1 6-6h3v3a6 6 0 0 1-6 6h-3Z" />
           <path d="M12 22V10" />
         </svg>
-        حديقتك التفاعلية
-      </h3>
-      <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "16px" }}>
-        راقب نمو نبتتك وتفتح زهورها مع كل مهمة وعادة تلتزم بها طوال اليوم.
-      </p>
+            حديقتك التفاعلية
+          </h3>
+          <p style={{ color: "var(--text-muted)", fontSize: "12px", margin: "5px 0 0" }}>
+            عادة مكتملة = نمو جديد
+          </p>
+        </div>
+        <span style={gardenBadgeStyle}>{percentage}%</span>
+      </div>
 
       <div style={illustrationContainerStyle}>
         {/* SVG Premium Plant Illustration */}
-        <svg viewBox="0 0 200 200" width="100%" height="220" style={{ overflow: "visible" }}>
+        <svg viewBox="0 0 200 200" width="100%" height="180" style={{ overflow: "visible" }} aria-label="رسم حديقة توازن">
           {/* Custom micro-animations styled internally */}
           <style>{`
             @keyframes floatParticles {
@@ -326,13 +331,33 @@ const gardenCardStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
+  padding: "20px",
+  borderRadius: "22px",
+};
+
+const gardenHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: "12px",
+};
+
+const gardenBadgeStyle: React.CSSProperties = {
+  minWidth: "48px",
+  padding: "7px 10px",
+  borderRadius: "999px",
+  background: "var(--brand-light)",
+  color: "var(--brand)",
+  fontSize: "13px",
+  fontWeight: 800,
+  textAlign: "center",
 };
 
 const illustrationContainerStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "10px 0",
+  padding: "4px 0 0",
 };
 
 const progressInfoStyle: React.CSSProperties = {

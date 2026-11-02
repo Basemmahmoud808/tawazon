@@ -514,7 +514,7 @@ tbody tr:hover td {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--bg-accent);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -528,12 +528,13 @@ tbody tr:hover td {
     flex-direction: column;
     gap: 3px;
     font-size: 9px;
-    padding: 6px 6px;
+    padding: 8px 6px;
     flex: 1;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    min-width: 0;
+    min-width: 56px;
+    min-height: 48px;
   }
 
   .nav-button.active::after { display: none; }
@@ -546,7 +547,7 @@ tbody tr:hover td {
   .nav-button svg { width: 20px; height: 20px; }
 
   .main-content {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
     padding-left: var(--spacing-sm);
     padding-right: var(--spacing-sm);
   }
@@ -580,8 +581,8 @@ tbody tr:hover td {
   }
 
   .nav-button {
-    padding: 6px 8px;
-    font-size: 8px;
+    padding: 8px 6px;
+    font-size: 9px;
   }
 
   .card {
@@ -1328,5 +1329,4 @@ body.dark-mode .login-theme-toggle {
     border-radius: 6px !important;
   }
 }
-
 
