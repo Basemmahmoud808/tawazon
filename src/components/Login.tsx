@@ -53,6 +53,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         return "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
       case "auth/email-already-in-use":
         return "البريد الإلكتروني مستخدم بالفعل بحساب آخر.";
+      case "auth/invalid-api-key":
+        return "إعدادات Firebase غير صحيحة في النسخة المنشورة.";
+      case "auth/app-not-authorized":
+        return "هذا الموقع غير مصرح له باستخدام مشروع Firebase.";
       case "auth/weak-password":
         return "كلمة المرور ضعيفة جداً. يجب أن تتكون من 6 خانات على الأقل.";
       case "auth/too-many-requests":
@@ -71,7 +75,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
       case "auth/requires-recent-login":
         return "انتهت جلسة الحساب. سجّل الدخول مرة أخرى ثم حاول.";
       default:
-        return "حدث خطأ غير متوقع. الرجاء المحاولة لاحقاً.";
+        return code
+          ? `تعذر إكمال العملية (${code}). حاول مرة أخرى لاحقاً.`
+          : "حدث خطأ غير متوقع. الرجاء المحاولة لاحقاً.";
     }
   };
 
@@ -117,10 +123,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
       if (isRegistering) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const displayName = emailName.trim() || email.split("@")[0];
-        await updateProfile(userCredential.user, { displayName });
-        await sendEmailVerification(userCredential.user);
+        let profileUpdateFailed = false;
+        try {
+          await updateProfile(userCredential.user, { displayName });
+        } catch {
+          profileUpdateFailed = true;
+        }
         setVerificationPending(true);
-        setErrorMsg("");
+        try {
+          await sendEmailVerification(userCredential.user);
+          setErrorMsg(
+            profileUpdateFailed
+              ? "تم إنشاء الحساب وإرسال رسالة التأكيد، لكن تعذر حفظ الاسم. يمكنك المتابعة بعد تأكيد البريد."
+              : "تم إنشاء الحساب. افتح رسالة التأكيد التي أرسلناها إلى بريدك."
+          );
+        } catch (error: unknown) {
+          const code = getFirebaseErrorCode(error);
+          setErrorMsg(`تم إنشاء الحساب، لكن تعذر إرسال رسالة التأكيد. ${getArabicErrorMessage(code)}`);
+        }
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         if (!userCredential.user.emailVerified) {
@@ -132,6 +152,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
       }
     } catch (error: unknown) {
       const code = getFirebaseErrorCode(error);
+      if (code === "auth/email-already-in-use") {
+        setIsRegistering(false);
+        setErrorMsg("هذا البريد مسجل بالفعل. بدّل إلى تسجيل الدخول أو استخدم استعادة كلمة المرور.");
+        return;
+      }
       setErrorMsg(getArabicErrorMessage(code));
     } finally {
       setLoading(false);
