@@ -81,6 +81,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
     }
   };
 
+  const verificationActionSettings = {
+    url: window.location.origin,
+    handleCodeInApp: false,
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -131,11 +136,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         }
         setVerificationPending(true);
         try {
-          await sendEmailVerification(userCredential.user);
+          await sendEmailVerification(userCredential.user, verificationActionSettings);
           setErrorMsg(
             profileUpdateFailed
-              ? "تم إنشاء الحساب وإرسال رسالة التأكيد، لكن تعذر حفظ الاسم. يمكنك المتابعة بعد تأكيد البريد."
-              : "تم إنشاء الحساب. افتح رسالة التأكيد التي أرسلناها إلى بريدك."
+              ? "تم إرسال رسالة التأكيد. افحص الوارد وSpam أو Promotions، لكن تعذر حفظ الاسم."
+              : "تم إرسال رسالة التأكيد. افحص الوارد وSpam أو Promotions ثم اضغط الرابط."
           );
         } catch (error: unknown) {
           const code = getFirebaseErrorCode(error);
@@ -179,8 +184,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
     setLoading(true);
     setLoadingMessage("جاري إرسال رسالة التأكيد...");
     try {
-      await sendEmailVerification(auth.currentUser);
-      setErrorMsg("تم إرسال رسالة تأكيد جديدة. راجع بريدك ومجلد الرسائل غير المرغوب فيها.");
+      await sendEmailVerification(auth.currentUser, verificationActionSettings);
+      setErrorMsg("تم إرسال رسالة تأكيد جديدة. افحص الوارد وSpam أو Promotions، وقد يتأخر وصولها دقائق.");
     } catch (error: unknown) {
       const code = getFirebaseErrorCode(error);
       setErrorMsg(getArabicErrorMessage(code));
