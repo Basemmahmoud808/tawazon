@@ -135,6 +135,12 @@ export default function App() {
     if (!auth) return;
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
+        if (user.email && !user.emailVerified) {
+          setIsLoggedIn(false);
+          setUserId("guest");
+          localStorage.setItem("tawazon_current_uid", "guest");
+          return;
+        }
         const name = user.displayName || user.email?.split("@")[0] || "مستخدم توازن";
         setUserName(name);
         setIsLoggedIn(true);

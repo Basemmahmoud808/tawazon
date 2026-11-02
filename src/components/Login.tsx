@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   updateProfile,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  reload,
+  signOut,
 } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -19,10 +22,17 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const [isRegistering, setIsRegistering] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [emailName, setEmailName] = useState("");
+  const [verificationPending, setVerificationPending] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (auth?.currentUser?.email && !auth.currentUser.emailVerified) {
+      setVerificationPending(true);
+    }
+  }, []);
 
   const getArabicErrorMessage = (code: string) => {
     switch (code) {
@@ -92,9 +102,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const displayName = emailName.trim() || email.split("@")[0];
         await updateProfile(userCredential.user, { displayName });
-        onLoginSuccess(displayName, "email");
+        await sendEmailVerification(userCredential.user);
+        setVerificationPending(true);
+        setErrorMsg("");
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        if (!userCredential.user.emailVerified) {
+          setVerificationPending(true);
+          setErrorMsg("");
+          return;
+        }
         onLoginSuccess(userCredential.user.displayName || email.split("@")[0], "email");
       }
     } catch (error: unknown) {
@@ -106,7 +123,52 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   };
 
   const handleGuestLogin = () => {
-    onLoginSuccess("ضيف توازن", "guest");
+    if (auth) {
+      void signOut(auth).finally(() => onLoginSuccess("ضيف توازن", "guest"));
+    } else {
+      onLoginSuccess("ضيف توازن", "guest");
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!auth?.currentUser) {
+      setErrorMsg("سجّل دخولك بالبريد وكلمة المرور أولاً لإعادة إرسال الرسالة.");
+      return;
+    }
+    setLoading(true);
+    setLoadingMessage("جاري إرسال رسالة التأكيد...");
+    try {
+      await sendEmailVerification(auth.currentUser);
+      setErrorMsg("تم إرسال رسالة تأكيد جديدة. راجع بريدك ومجلد الرسائل غير المرغوب فيها.");
+    } catch (error: unknown) {
+      const code = error instanceof Error && "code" in error ? String(error.code) : "";
+      setErrorMsg(getArabicErrorMessage(code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerificationCheck = async () => {
+    if (!auth?.currentUser) return;
+    setLoading(true);
+    setLoadingMessage("جاري التحقق من حالة البريد...");
+    try {
+      await reload(auth.currentUser);
+      if (auth.currentUser.emailVerified) {
+        setVerificationPending(false);
+        onLoginSuccess(
+          auth.currentUser.displayName || auth.currentUser.email?.split("@")[0] || "مستخدم توازن",
+          "email"
+        );
+      } else {
+        setErrorMsg("لم يتم تأكيد البريد بعد. اضغط على الرابط في الرسالة ثم حاول مرة أخرى.");
+      }
+    } catch (error: unknown) {
+      const code = error instanceof Error && "code" in error ? String(error.code) : "";
+      setErrorMsg(getArabicErrorMessage(code));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -163,7 +225,34 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
               <span className="login-divider-line" />
             </div>
 
-            {/* ─── نموذج البريد الإلكتروني ─── */}
+            {verificationPending ? (
+              <div className="login-verification-panel">
+                <div className="login-verification-icon">✉️</div>
+                <h3>أكد بريدك الإلكتروني</h3>
+                <p>
+                  أرسلنا رابط التأكيد إلى <strong>{auth?.currentUser?.email || email}</strong>.
+                  افتح الرابط ثم اضغط «تحققت من البريد».
+                </p>
+                <button type="button" onClick={handleVerificationCheck} className="login-submit-btn">
+                  تحققت من البريد
+                </button>
+                <button type="button" onClick={handleResendVerification} className="login-toggle-link">
+                  إعادة إرسال رسالة التأكيد
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (auth) void signOut(auth);
+                    setVerificationPending(false);
+                    setErrorMsg("");
+                  }}
+                  className="login-toggle-link"
+                >
+                  استخدام بريد مختلف
+                </button>
+              </div>
+            ) : (
+            /* ─── نموذج البريد الإلكتروني ─── */
             <form onSubmit={handleEmailSubmit} className="login-form">
               {!isResettingPassword && isRegistering && (
                 <div className="login-input-group">
@@ -204,7 +293,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
               </div>}
 
               <button type="submit" className="login-submit-btn">
-                {isResettingPassword ? "إرسال رابط الاستعادة" : isRegistering ? "إنشاء حساب جديد ودخول" : "تسجيل الدخول"}
+                {isResettingPassword ? "إرسال رابط الاستعادة" : isRegistering ? "إنشاء الحساب وإرسال التأكيد" : "تسجيل الدخول"}
               </button>
 
               <div style={{ textAlign: "center", marginTop: "12px" }}>
@@ -226,6 +315,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
                 )}
               </div>
             </form>
+            )}
           </>
         )}
       </div>
