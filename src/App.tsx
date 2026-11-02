@@ -13,7 +13,6 @@ const PrayerTimes   = lazy(() => import("./components/PrayerTimes").then((m) => 
 const Athkar        = lazy(() => import("./components/Athkar").then((m) => ({ default: m.Athkar })));
 const DailyWird     = lazy(() => import("./components/DailyWird").then((m) => ({ default: m.DailyWird })));
 const HistoryArchive = lazy(() => import("./components/HistoryArchive").then((m) => ({ default: m.HistoryArchive })));
-const GardenView    = lazy(() => import("./components/GardenView").then((m) => ({ default: m.GardenView })));
 
 // ─── Firebase ────────────────────────────────────────────────────────────────
 import { signOut, onAuthStateChanged } from "firebase/auth";
@@ -408,10 +407,6 @@ export default function App() {
                 {/* Habits */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
 
-                {/* GardenView — حديقة تتفتح مع إكمال العادات */}
-                <Suspense fallback={null}>
-                  <GardenView completedCount={completedCount} totalCount={totalCount} theme={theme} />
-                </Suspense>
                   <h4 style={checklistTitleStyle}>المهام اليومية</h4>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {habits.map((habit) => (
