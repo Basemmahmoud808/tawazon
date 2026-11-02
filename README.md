@@ -1,18 +1,24 @@
 # Tawazon
 
-توازن هو تطبيق عربي للروتين اليومي، تتبع العادات، الأذكار، والورد اليومي.
+توازن هو موقع عربي للروتين اليومي، تتبع العادات، الأذكار، والورد اليومي.
 
 ## النشر على tawazan.tech
 
-المشروع مهيأ الآن لـ Firebase Hosting، وهذا هو المسار المناسب لربط الدومين المخصص `tawazan.tech`.
+المشروع ينشر الموقع تلقائيًا على GitHub Pages عند كل Push إلى فرع `main`، مع الحفاظ على الدومين المخصص `tawazan.tech`.
 
 ### المطلوب خارج الكود
 
-1. إنشاء/اختيار مشروع Firebase.
-2. إضافة الدومين المخصص من Firebase Hosting ثم إعداد سجلات DNS عند مزود الدومين.
-3. إضافة أسرار GitHub Actions التالية:
-  - `FIREBASE_SERVICE_ACCOUNT_TAWAZAN`
-  - `FIREBASE_PROJECT_ID`
+1. من إعدادات GitHub افتح **Pages** واختر **GitHub Actions** كمصدر النشر.
+2. اربط `tawazan.tech` و`www.tawazan.tech` من إعدادات النطاقات وسجلات DNS.
+3. أضف أسرار إعداد Firebase التالية حتى يعمل تسجيل الدخول في النسخة المنشورة:
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - `VITE_FIREBASE_STORAGE_BUCKET`
+   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
+   - `VITE_FIREBASE_APP_ID`
+
+> مفاتيح Firebase Web تستخدم داخل المتصفح لتشغيل تسجيل الدخول وقاعدة البيانات، بينما النشر نفسه يتم عبر GitHub Pages ولا يحتاج حساب خدمة Firebase.
 
 ### النشر المحلي
 
@@ -23,15 +29,14 @@ npm run build
 
 ### ملاحظات
 
-- التطبيق يعمل كـ SPA، لذلك `firebase.json` مضبوط لإعادة التوجيه إلى `index.html`.
-- عند إضافة `tawazan.tech` في Firebase Hosting، يمكن أيضًا تفعيل `www.tawazan.tech` وإعادة التوجيه إلى النطاق الأساسي.
+- الموقع يعمل كـ SPA، وملف `public/CNAME` يحافظ على الدومين المخصص أثناء النشر.
+- عند استخدام مسارات داخلية مستقبلًا، يجب إضافة fallback مناسب لـ GitHub Pages.
 
 ## خطوات الإكمال السريعة
 
-1. افتح Firebase Console وأنشئ أو اختر مشروعًا.
-2. أضف موقع Hosting ثم اربط `tawazan.tech` و`www.tawazan.tech`.
-3. أضف سجلات DNS التي يطلبها Firebase عند مزود الدومين.
-4. أضف أسرار GitHub Actions المطلوبة ثم ادفع إلى `main`.
+1. فعّل GitHub Pages باستخدام GitHub Actions.
+2. اربط `tawazan.tech` و`www.tawazan.tech` وسجلات DNS.
+3. أضف أسرار Firebase المطلوبة ثم ادفع إلى `main`.
 
 ## React + TypeScript + Vite
 
