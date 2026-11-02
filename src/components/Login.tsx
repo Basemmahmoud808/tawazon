@@ -28,6 +28,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
   const [loadingMessage, setLoadingMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const getFirebaseErrorCode = (error: unknown) => {
+    if (typeof error === "object" && error !== null && "code" in error) {
+      return String(error.code);
+    }
+    return "";
+  };
+
   useEffect(() => {
     if (auth?.currentUser?.email && !auth.currentUser.emailVerified) {
       setVerificationPending(true);
@@ -54,6 +61,15 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         return "تعذر الاتصال بالإنترنت. تحقق من الاتصال وحاول مرة أخرى.";
       case "auth/operation-not-allowed":
         return "تسجيل البريد الإلكتروني غير مفعّل في إعدادات الموقع.";
+      case "auth/unauthorized-domain":
+        return "نطاق الموقع غير مضاف إلى النطاقات المسموح بها في Firebase.";
+      case "auth/quota-exceeded":
+        return "تم تجاوز حد إرسال رسائل التأكيد مؤقتاً. حاول لاحقاً.";
+      case "auth/internal-error":
+        return "حدث خطأ داخل خدمة الحسابات. حاول مرة أخرى بعد قليل.";
+      case "auth/user-token-expired":
+      case "auth/requires-recent-login":
+        return "انتهت جلسة الحساب. سجّل الدخول مرة أخرى ثم حاول.";
       default:
         return "حدث خطأ غير متوقع. الرجاء المحاولة لاحقاً.";
     }
@@ -78,7 +94,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         setErrorMsg("تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني.");
         setIsResettingPassword(false);
       } catch (error: unknown) {
-        const code = error instanceof Error && "code" in error ? String(error.code) : "";
+        const code = getFirebaseErrorCode(error);
         setErrorMsg(getArabicErrorMessage(code));
       } finally {
         setLoading(false);
@@ -115,7 +131,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         onLoginSuccess(userCredential.user.displayName || email.split("@")[0], "email");
       }
     } catch (error: unknown) {
-      const code = error instanceof Error && "code" in error ? String(error.code) : "";
+      const code = getFirebaseErrorCode(error);
       setErrorMsg(getArabicErrorMessage(code));
     } finally {
       setLoading(false);
@@ -141,7 +157,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
       await sendEmailVerification(auth.currentUser);
       setErrorMsg("تم إرسال رسالة تأكيد جديدة. راجع بريدك ومجلد الرسائل غير المرغوب فيها.");
     } catch (error: unknown) {
-      const code = error instanceof Error && "code" in error ? String(error.code) : "";
+      const code = getFirebaseErrorCode(error);
       setErrorMsg(getArabicErrorMessage(code));
     } finally {
       setLoading(false);
@@ -164,7 +180,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
         setErrorMsg("لم يتم تأكيد البريد بعد. اضغط على الرابط في الرسالة ثم حاول مرة أخرى.");
       }
     } catch (error: unknown) {
-      const code = error instanceof Error && "code" in error ? String(error.code) : "";
+      const code = getFirebaseErrorCode(error);
       setErrorMsg(getArabicErrorMessage(code));
     } finally {
       setLoading(false);
