@@ -346,7 +346,7 @@ export default function App() {
       {/* ── Main ── */}
       <main className="main-content">
         {activeTab === "home" && (
-          <div className="card" style={mainDashboardCardStyle}>
+          <div className="card dashboard-shell" style={mainDashboardCardStyle}>
             {/* Header Bar */}
             <div style={cardHeaderBarStyle}>
               <h2 style={{ fontFamily: "Thmanyah Serif Display, serif", color: "var(--brand)", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
@@ -633,14 +633,16 @@ export default function App() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const mainDashboardCardStyle: React.CSSProperties = {
-  backgroundColor: "var(--bg-card)", borderRadius: "28px", padding: "32px",
-  border: "1px solid var(--bg-accent)", boxShadow: "var(--shadow-md)",
+  backgroundColor: "var(--bg-card)", borderRadius: "24px", padding: "24px",
+  border: "1px solid color-mix(in srgb, var(--bg-accent) 72%, transparent)",
+  boxShadow: "0 12px 32px rgba(17,91,61,0.07)",
   width: "100%", maxWidth: "1000px", margin: "0 auto",
-  display: "flex", flexDirection: "column", gap: "24px",
+  display: "flex", flexDirection: "column", gap: "18px",
 };
 const cardHeaderBarStyle: React.CSSProperties = {
   display: "flex", justifyContent: "space-between", alignItems: "center",
-  borderBottom: "1px solid var(--bg-accent)", paddingBottom: "16px",
+  borderBottom: "1px solid color-mix(in srgb, var(--bg-accent) 70%, transparent)",
+  paddingBottom: "14px",
 };
 const userAvatarCircleMini: React.CSSProperties = {
   width: "36px", height: "36px", borderRadius: "50%",

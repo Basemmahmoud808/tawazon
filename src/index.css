@@ -418,6 +418,14 @@ h3 { font-size: 20px; }
   margin-top: 12px;
 }
 
+.dashboard-shell > .dashboard-grid-inner {
+  gap: 20px;
+}
+
+.dashboard-shell > .dashboard-grid-inner > div {
+  min-width: 0;
+}
+
 /* ── Emoji accent ────────────────────────────────────────────────────────── */
 .emoji-accent {
   display: inline-block;
@@ -567,6 +575,16 @@ tbody tr:hover td {
   .card {
     border-radius: 20px;
     padding: 18px;
+  }
+
+  .dashboard-shell {
+    padding: 18px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 24px rgba(17,91,61,0.06) !important;
+  }
+
+  .dashboard-shell > .dashboard-grid-inner {
+    gap: 16px;
   }
 }
 
