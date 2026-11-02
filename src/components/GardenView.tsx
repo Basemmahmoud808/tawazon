@@ -114,11 +114,6 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
               <stop offset="50%" stopColor="#2d6a4f" />
               <stop offset="100%" stopColor="#081c15" />
             </linearGradient>
-            <linearGradient id="potGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={isDark ? "#6b4b3e" : "#d99a72"} />
-              <stop offset="55%" stopColor={isDark ? "#4b3027" : "#b96f4a"} />
-              <stop offset="100%" stopColor={isDark ? "#2a1b18" : "#87452f"} />
-            </linearGradient>
             <linearGradient id="soilGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor={isDark ? "#4a3022" : "#6b422d"} />
               <stop offset="100%" stopColor={isDark ? "#241812" : "#3e261c"} />
@@ -185,17 +180,22 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
           <circle cx="43" cy="157" r="2.5" fill={isDark ? "#57d68d" : "#4b9b68"} opacity="0.8" />
           <circle cx="157" cy="151" r="2" fill={isDark ? "#57d68d" : "#4b9b68"} opacity="0.7" />
           
-          {/* Ceramic Pot and Rim */}
-          <ellipse cx="100" cy="181" rx="30" ry="5" fill="#163a2b" opacity={isDark ? "0.65" : "0.22"} />
-          <path d="M 73 151 Q 100 157 127 151 L 121 179 Q 100 184 79 179 Z" fill="url(#potGradient)" filter="url(#cardShadow)" />
-          <path d="M 79 158 Q 100 164 121 158 L 119 177 Q 100 181 81 177 Z" fill="rgba(255,255,255,0.08)" />
-          
-          {/* Warm ceramic rim and soil */}
-          <path d="M 70 147 Q 100 153 130 147 L 129 154 Q 100 161 71 154 Z" fill={isDark ? "#7f5847" : "#d78a62"} />
-          <ellipse cx="100" cy="150" rx="26" ry="5" fill="url(#soilGradient)" />
-
-          {/* Gold Accent Band around the concrete pot for a premium touch */}
-          <path d="M 78 164 Q 100 169 122 164 L 121 168 Q 100 173 79 168 Z" fill={isDark ? "#f0b958" : "#d59a38"} style={{ filter: "drop-shadow(0 0 4px rgba(245,158,11,0.35))" }} />
+          {/* Open soil bed: flowers grow directly from the ground */}
+          <path
+            d="M 30 157 Q 62 146 100 153 Q 138 146 170 157 Q 160 174 100 176 Q 40 174 30 157 Z"
+            fill="url(#soilGradient)"
+            filter="url(#cardShadow)"
+          />
+          <path
+            d="M 35 158 Q 67 151 100 157 Q 133 151 165 158"
+            fill="none"
+            stroke={isDark ? "#81543a" : "#9b6542"}
+            strokeWidth="2"
+            strokeLinecap="round"
+            opacity="0.8"
+          />
+          <circle cx="54" cy="164" r="1.5" fill={isDark ? "#a87951" : "#c1875b"} />
+          <circle cx="145" cy="166" r="1.5" fill={isDark ? "#a87951" : "#c1875b"} />
 
           {/* ─── Plant growth stem structure (wraps in sway animation) ─── */}
           <g className="stem-sway">
