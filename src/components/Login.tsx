@@ -111,18 +111,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
 
   return (
     <div className="login-wrapper">
-      <button
-        onClick={onToggleTheme}
-        className="login-theme-toggle emoji-accent"
-        title={theme === "dark" ? "الوضع المضيء" : "الوضع الداكن"}
-      >
-        {theme === "dark" ? "☀️" : "🌙"}
-      </button>
-
       <div className="login-blob-left" />
       <div className="login-blob-right" />
 
       <div className="login-card-responsive login-card">
+        <button
+          onClick={onToggleTheme}
+          className="login-theme-toggle emoji-accent"
+          title={theme === "dark" ? "الوضع المضيء" : "الوضع الداكن"}
+          aria-label={theme === "dark" ? "تفعيل الوضع المضيء" : "تفعيل الوضع الداكن"}
+        >
+          {theme === "dark" ? "☀️" : "🌙"}
+        </button>
+
         <div className="login-logo-header">
           <div className="login-logo-icon emoji-accent">🌿</div>
           <h2 className="login-logo-title">توازن</h2>
