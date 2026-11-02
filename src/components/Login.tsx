@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -34,12 +34,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
     }
     return "";
   };
-
-  useEffect(() => {
-    if (auth?.currentUser?.email && !auth.currentUser.emailVerified) {
-      setVerificationPending(true);
-    }
-  }, []);
 
   const getArabicErrorMessage = (code: string) => {
     switch (code) {
@@ -128,31 +122,20 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, theme, onToggleThe
       if (isRegistering) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const displayName = emailName.trim() || email.split("@")[0];
-        let profileUpdateFailed = false;
         try {
           await updateProfile(userCredential.user, { displayName });
         } catch {
-          profileUpdateFailed = true;
+          console.warn("Unable to save the user's display name.");
         }
-        setVerificationPending(true);
         try {
           await sendEmailVerification(userCredential.user, verificationActionSettings);
-          setErrorMsg(
-            profileUpdateFailed
-              ? "تم إرسال رسالة التأكيد. افحص الوارد وSpam أو Promotions، لكن تعذر حفظ الاسم."
-              : "تم إرسال رسالة التأكيد. افحص الوارد وSpam أو Promotions ثم اضغط الرابط."
-          );
         } catch (error: unknown) {
           const code = getFirebaseErrorCode(error);
-          setErrorMsg(`تم إنشاء الحساب، لكن تعذر إرسال رسالة التأكيد. ${getArabicErrorMessage(code)}`);
+          console.warn("Verification email was not delivered:", code);
         }
+        onLoginSuccess(displayName, "email");
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        if (!userCredential.user.emailVerified) {
-          setVerificationPending(true);
-          setErrorMsg("");
-          return;
-        }
         onLoginSuccess(userCredential.user.displayName || email.split("@")[0], "email");
       }
     } catch (error: unknown) {
