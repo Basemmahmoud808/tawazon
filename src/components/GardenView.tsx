@@ -9,6 +9,16 @@ interface GardenViewProps {
 export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCount, theme }) => {
   const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const isDark = theme === "dark";
+  const flowerPositions = [
+    { x: 38, y: 120 },
+    { x: 59, y: 100 },
+    { x: 80, y: 84 },
+    { x: 100, y: 72 },
+    { x: 120, y: 84 },
+    { x: 141, y: 100 },
+    { x: 162, y: 120 },
+  ];
+  const visibleFlowers = flowerPositions.slice(0, Math.min(completedCount, flowerPositions.length));
 
   return (
     <div
@@ -80,6 +90,11 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
             .stem-sway { animation: windSway 6s ease-in-out infinite; transform-origin: 100px 149px; }
             .leaf-left-sway { animation: leafLeftSway 5s ease-in-out infinite; }
             .leaf-right-sway { animation: leafRightSway 5s ease-in-out infinite 0.8s; }
+            .flower-bloom { animation: flowerBloom 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; transform-box: fill-box; transform-origin: center bottom; }
+            @keyframes flowerBloom {
+              from { opacity: 0; transform: translateY(10px) scale(0.2); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
             .glow-effect { transition: all 1s ease; }
           `}</style>
 
@@ -209,6 +224,31 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
               </g>
             )}
 
+            {/* Each completed habit grows one flower from the soil */}
+            {visibleFlowers.map((flower, index) => (
+              <g
+                key={`${flower.x}-${completedCount}`}
+                className="flower-bloom"
+                style={{ animationDelay: `${index * 120}ms` }}
+              >
+                <path
+                  d={`M 100 149 Q ${flower.x} 137 ${flower.x} ${flower.y + 5}`}
+                  fill="none"
+                  stroke="url(#stemGradient)"
+                  strokeWidth={index === 2 ? "3.5" : "2.5"}
+                  strokeLinecap="round"
+                />
+                <g transform={`translate(${flower.x} ${flower.y})`}>
+                  <circle cx="0" cy="-6" r="5" fill="url(#petalGradient)" />
+                  <circle cx="6" cy="0" r="5" fill="url(#petalGradient)" />
+                  <circle cx="0" cy="6" r="5" fill="url(#petalGradient)" />
+                  <circle cx="-6" cy="0" r="5" fill="url(#petalGradient)" />
+                  <circle cx="0" cy="0" r="3.5" fill="url(#innerPetalGradient)" />
+                  <circle cx="-1" cy="-1" r="1.2" fill="#fff7c2" opacity="0.9" />
+                </g>
+              </g>
+            ))}
+
             {/* First pair of leaves (Left & Right) - Visible from 25% */}
             {percentage >= 25 && (
               <g style={{ transition: "all 0.5s ease" }}>
@@ -253,59 +293,6 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
                   <path d="M 114 65 C 135 65, 141 52, 114 57 Z" fill="#081c15" opacity="0.25" />
                   {/* Leaf Vein */}
                   <path d="M 114 65 Q 127 59 133 56" fill="none" stroke="#a7f3d0" strokeWidth="1" opacity="0.65" />
-                </g>
-              </g>
-            )}
-
-            {/* Bud - Visible from 75% to 99% */}
-            {percentage >= 75 && percentage < 100 && (
-              <g style={{ transformOrigin: "100px 36px", transition: "all 0.5s ease" }}>
-                {/* Bud Base and Petals */}
-                <path d="M 100 36 C 92 26, 93 16, 100 11 C 107 16, 108 26, 100 36 Z" fill="var(--color-sand)" />
-                <path d="M 100 36 C 96 26, 96 16, 100 11 Z" fill="var(--color-terracotta)" opacity="0.65" />
-              </g>
-            )}
-
-            {/* Fully Bloomed Flower - Stage 5 (100%) */}
-            {percentage === 100 && (
-              <g style={{ transformOrigin: "100px 36px" }}>
-                {/* Stem Connection */}
-                <line x1="100" y1="36" x2="100" y2="22" stroke="var(--color-sage)" strokeWidth="3" />
-                
-                {/* Upgraded Premium Blossom with symmetric rotated petals */}
-                <g style={{ transform: "translate(0, 7px)" }}>
-                  {/* Outer Petals */}
-                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(0 100 15)" />
-                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(72 100 15)" />
-                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(144 100 15)" />
-                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(216 100 15)" />
-                  <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#petalGradient)" transform="rotate(288 100 15)" />
-
-                  {/* Inner layer of petals (slightly offset and scaled down) */}
-                  <g transform="translate(100, 15) scale(0.68) translate(-100, -15)">
-                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(36 100 15)" />
-                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(108 100 15)" />
-                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(180 100 15)" />
-                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(252 100 15)" />
-                    <path d="M 100 15 C 84 -2, 116 -2, 100 15 Z" fill="url(#innerPetalGradient)" transform="rotate(324 100 15)" />
-                  </g>
-
-                  {/* Glowing Core center */}
-                  <circle cx="100" cy="15" r="4.5" fill="#ffffff" style={{ filter: "drop-shadow(0 0 4px #fff)" }} />
-                </g>
-                
-                {/* Floating Star Sparkles */}
-                <g className="sparkle-1" style={{ transformOrigin: "62px 12px" }}>
-                  <path d="M 62 12 L 64 14 L 62 16 L 60 14 Z" fill="var(--color-sand)" />
-                </g>
-                <g className="sparkle-2" style={{ transformOrigin: "138px 6px" }}>
-                  <path d="M 138 6 L 141 9 L 138 12 L 135 9 Z" fill="var(--color-sand)" />
-                </g>
-                <g className="sparkle-3" style={{ transformOrigin: "116px 32px" }}>
-                  <circle cx="116" cy="32" r="2" fill="var(--color-meditate)" />
-                </g>
-                <g className="sparkle-1" style={{ transformOrigin: "76px 42px" }}>
-                  <circle cx="76" cy="42" r="1.5" fill="var(--color-meditate)" />
                 </g>
               </g>
             )}
