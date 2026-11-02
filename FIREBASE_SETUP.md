@@ -11,18 +11,14 @@
 5. أضف `www.tawazan.tech` إذا أردت ثم فعّل إعادة التوجيه إلى الدومين الأساسي.
 6. انسخ سجلات DNS التي يعرضها GitHub Pages وضعها عند مزود الدومين.
 
-## GitHub Secrets
+## إعداد Firebase في الموقع
 
-أضف أسرار Firebase Web التالية إلى المستودع حتى يعمل تسجيل الدخول في النسخة المنشورة:
-
-- `VITE_FIREBASE_API_KEY`
-- `VITE_FIREBASE_AUTH_DOMAIN`
-- `VITE_FIREBASE_PROJECT_ID`
-- `VITE_FIREBASE_STORAGE_BUCKET`
-- `VITE_FIREBASE_MESSAGING_SENDER_ID`
-- `VITE_FIREBASE_APP_ID`
+إعدادات Firebase Web الخاصة بمشروع `tawazan-1ec87` موجودة في
+`src/firebase.ts`. هذه القيم عامة بطبيعتها لتطبيقات Firebase Web، لذلك لا
+يعتمد النشر على GitHub Secrets. لا تضع كلمات مرور أو مفاتيح خدمة Firebase في
+ملفات الموقع.
 
 ## ملاحظات مهمة
 
 - الموقع الحالي مصمم كـ SPA، لذلك أي مسار غير الجذر سيعود إلى `index.html`.
-- بعد ربط الدومين، تحقق من أن `authDomain` في ملفات البيئة يشير إلى مشروع Firebase الصحيح.
+- بعد ربط الدومين، تحقق من أن `authDomain` في `src/firebase.ts` يشير إلى مشروع Firebase الصحيح.
