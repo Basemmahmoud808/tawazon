@@ -100,8 +100,13 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
               <stop offset="100%" stopColor="#081c15" />
             </linearGradient>
             <linearGradient id="potGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={isDark ? "#27272a" : "#e4e4e7"} />
-              <stop offset="100%" stopColor={isDark ? "#09090b" : "#a1a1aa"} />
+              <stop offset="0%" stopColor={isDark ? "#6b4b3e" : "#d99a72"} />
+              <stop offset="55%" stopColor={isDark ? "#4b3027" : "#b96f4a"} />
+              <stop offset="100%" stopColor={isDark ? "#2a1b18" : "#87452f"} />
+            </linearGradient>
+            <linearGradient id="soilGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={isDark ? "#4a3022" : "#6b422d"} />
+              <stop offset="100%" stopColor={isDark ? "#241812" : "#3e261c"} />
             </linearGradient>
             <linearGradient id="petalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#fecdd3" />
@@ -119,6 +124,18 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
 
           {/* Calming ambient background glow behind the plant */}
           <circle cx="100" cy="110" r="80" fill="url(#ambientGlow)" className="glow-effect" />
+
+          {/* Soft garden scene to give the illustration a clear setting */}
+          <path
+            d="M 22 143 Q 55 112 92 137 Q 127 104 178 143 V 170 H 22 Z"
+            fill={isDark ? "#0d3b2b" : "#c9e8d2"}
+            opacity="0.72"
+          />
+          <path
+            d="M 22 153 Q 62 126 101 151 Q 141 120 178 153 V 170 H 22 Z"
+            fill={isDark ? "#11543a" : "#a9d8b8"}
+            opacity="0.72"
+          />
 
           {/* Theme-Aware Background: Sun or Moon */}
           {isDark ? (
@@ -149,22 +166,21 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
           )}
 
           {/* Ground platform */}
-          <path d="M 15 170 Q 100 163 185 170" fill="none" stroke="var(--bg-accent)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 15 170 Q 100 163 185 170" fill="none" stroke={isDark ? "#2b6b51" : "#83bd96"} strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="43" cy="157" r="2.5" fill={isDark ? "#57d68d" : "#4b9b68"} opacity="0.8" />
+          <circle cx="157" cy="151" r="2" fill={isDark ? "#57d68d" : "#4b9b68"} opacity="0.7" />
           
           {/* Ceramic Pot and Rim */}
-          <ellipse cx="100" cy="178" rx="28" ry="5" fill="var(--bg-accent)" opacity="0.45" />
-          {/* Hexagonal/Minimalist Concrete Pot */}
-          <path d="M 72 153 L 128 153 L 122 181 L 78 181 Z" fill="url(#potGradient)" filter="url(#cardShadow)" />
-          {/* Faceted Shading for 3D geometric concrete look */}
-          <path d="M 72 153 L 100 153 L 100 181 L 78 181 Z" fill="rgba(255,255,255,0.06)" />
-          <path d="M 100 153 L 128 153 L 122 181 L 100 181 Z" fill="rgba(0,0,0,0.18)" />
+          <ellipse cx="100" cy="181" rx="30" ry="5" fill="#163a2b" opacity={isDark ? "0.65" : "0.22"} />
+          <path d="M 73 151 Q 100 157 127 151 L 121 179 Q 100 184 79 179 Z" fill="url(#potGradient)" filter="url(#cardShadow)" />
+          <path d="M 79 158 Q 100 164 121 158 L 119 177 Q 100 181 81 177 Z" fill="rgba(255,255,255,0.08)" />
           
-          {/* Concrete Pot Top Rim */}
-          <path d="M 70 148 L 130 148 L 130 153 L 70 153 Z" fill={isDark ? "#3f3f46" : "#d4d4d8"} />
-          <ellipse cx="100" cy="149" rx="27" ry="2.5" fill="#3f2d21" />
+          {/* Warm ceramic rim and soil */}
+          <path d="M 70 147 Q 100 153 130 147 L 129 154 Q 100 161 71 154 Z" fill={isDark ? "#7f5847" : "#d78a62"} />
+          <ellipse cx="100" cy="150" rx="26" ry="5" fill="url(#soilGradient)" />
 
           {/* Gold Accent Band around the concrete pot for a premium touch */}
-          <path d="M 74 163 L 126 163 L 124 167 L 76 167 Z" fill="#f59e0b" style={{ filter: "drop-shadow(0 0 4px rgba(245,158,11,0.5))" }} />
+          <path d="M 78 164 Q 100 169 122 164 L 121 168 Q 100 173 79 168 Z" fill={isDark ? "#f0b958" : "#d59a38"} style={{ filter: "drop-shadow(0 0 4px rgba(245,158,11,0.35))" }} />
 
           {/* ─── Plant growth stem structure (wraps in sway animation) ─── */}
           <g className="stem-sway">
@@ -181,6 +197,16 @@ export const GardenView: React.FC<GardenViewProps> = ({ completedCount, totalCou
                 strokeDashoffset={130 - (130 * percentage) / 100}
                 style={{ transition: "stroke-dashoffset 0.8s ease-in-out" }}
               />
+            )}
+
+            {/* A visible seedling keeps the garden inviting from the first day */}
+            {percentage < 25 && (
+              <g style={{ transition: "all 0.5s ease" }}>
+                <path d="M 100 143 Q 92 132 82 134 Q 87 145 100 146 Z" fill="url(#leafGradient)" />
+                <path d="M 100 140 Q 108 129 118 132 Q 113 143 100 146 Z" fill="url(#leafGradient)" />
+                <path d="M 98 142 Q 91 137 85 136" fill="none" stroke="#a7f3d0" strokeWidth="1" opacity="0.7" />
+                <path d="M 102 140 Q 109 135 115 134" fill="none" stroke="#a7f3d0" strokeWidth="1" opacity="0.7" />
+              </g>
             )}
 
             {/* First pair of leaves (Left & Right) - Visible from 25% */}
